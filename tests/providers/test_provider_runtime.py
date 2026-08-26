@@ -41,6 +41,7 @@ from free_claude_code.config.provider_catalog import (
     ZENMUX_DEFAULT_BASE,
 )
 from free_claude_code.providers.admission import ProviderAdmissionController
+from free_claude_code.providers.anthropic import AnthropicProvider
 from free_claude_code.providers.cloudflare import CloudflareProvider
 from free_claude_code.providers.deepseek import DeepSeekProvider
 from free_claude_code.providers.gemini import GeminiProvider
@@ -73,6 +74,8 @@ def _make_settings(**overrides):
     mock.model_haiku = None
     mock.azure_openai_api_key = "test_azure_openai_key"
     mock.azure_openai_base_url = "https://test-resource.openai.azure.com/openai/v1/"
+    mock.anthropic_api_key = "test_anthropic_key"
+    mock.anthropic_proxy = None
     mock.nvidia_nim_api_key = "test_key"
     mock.open_router_api_key = "test_openrouter_key"
     mock.xai_api_key = "test_xai_key"
@@ -843,6 +846,7 @@ def test_create_provider_instantiates_each_builtin():
     cases = {
         "nvidia_nim": NvidiaNimProvider,
         "openai": OpenAICodexProvider,
+        "anthropic": AnthropicProvider,
         "cline_pass": OpenAIChatProvider,
         "xai": OpenAIChatProvider,
         "qwencloud": OpenAIChatProvider,
