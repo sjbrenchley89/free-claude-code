@@ -327,6 +327,9 @@ async def create_organization_task(
         background_tasks.add_task(organize_directory, task_manager, task_id, request)
 
         task = task_manager.get_task(task_id)
+        if not task:
+            raise HTTPException(status_code=500, detail="Failed to create task")
+
         return TaskResponse(
             task_id=task_id,
             status=task["status"],

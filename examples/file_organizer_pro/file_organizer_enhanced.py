@@ -93,11 +93,12 @@ def format_size(size_bytes: int) -> str:
     Returns:
         Formatted size string (e.g., "1.5 MB")
     """
+    size_float = float(size_bytes)
     for unit in ["B", "KB", "MB", "GB", "TB"]:
-        if size_bytes < 1024.0:
-            return f"{size_bytes:.2f} {unit}"
-        size_bytes /= 1024.0
-    return f"{size_bytes:.2f} PB"
+        if size_float < 1024.0:
+            return f"{size_float:.2f} {unit}"
+        size_float /= 1024.0
+    return f"{size_float:.2f} PB"
 
 
 def validate_directory(directory: str) -> Path:
@@ -159,11 +160,8 @@ def get_file_date_path(file_path: Path) -> str:
         Date path string (e.g., "2026/August/23")
     """
     try:
-        timestamp = (
-            file_path.stat().st_birthtime
-            if hasattr(file_path.stat(), "st_birthtime")
-            else file_path.stat().st_mtime
-        )
+        stat = file_path.stat()
+        timestamp = getattr(stat, "st_birthtime", stat.st_mtime)
         date = datetime.fromtimestamp(timestamp)
         month_name = date.strftime("%B")
         return f"{date.year}/{month_name}/{date.day:02d}"
