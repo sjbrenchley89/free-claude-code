@@ -21,6 +21,7 @@ from free_claude_code.core.version import package_version
 
 from .admin_cache import AdminNoStoreMiddleware, attach_admin_no_store
 from .admin_routes import router as admin_router
+from .health_routes import router as health_router
 from .ports import ApiServices
 from .request_errors import ordinary_application_error_response
 from .request_ids import (
@@ -42,6 +43,7 @@ def create_app(services: ApiServices) -> FastAPI:
     app.add_middleware(RequestCorrelationMiddleware)
 
     app.include_router(admin_router)
+    app.include_router(health_router)
     app.include_router(router)
 
     @app.exception_handler(RequestValidationError)
