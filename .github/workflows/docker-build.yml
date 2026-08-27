@@ -61,6 +61,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -71,4 +72,8 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Image digest
-        run: echo ${{ steps.build.outputs.digest }}
+        if: always()
+        run: |
+          if [ -n "${{ steps.build.outputs.digest }}" ]; then
+            echo "Image digest: ${{ steps.build.outputs.digest }}"
+          fi
