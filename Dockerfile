@@ -8,11 +8,15 @@ ENV PYTHONUNBUFFERED=1 \
     PORT=8000 \
     HOST=0.0.0.0
 
-# Install system dependencies for building
+# Install comprehensive system dependencies for building Python packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     build-essential \
     git \
+    curl \
+    libssl-dev \
+    libffi-dev \
+    zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
@@ -25,9 +29,13 @@ WORKDIR /app
 COPY pyproject.toml uv.lock README.md LICENSE ./
 COPY src ./src
 
-# Upgrade pip and install the package directly
-RUN pip install --upgrade pip setuptools && \
-    pip install --no-cache-dir -e .
+# Install with pip (upgraded for better dependency resolution)
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir .
+
+# Clean up unnecessary build files to reduce image size
+RUN find /usr/local -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true && \
+    rm -rf /usr/local/lib/python3.14/site-packages/*/tests /usr/local/lib/python3.14/site-packages/*/test
 
 # Switch to non-root user
 USER fcc
