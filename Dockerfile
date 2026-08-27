@@ -1,4 +1,4 @@
-# Free Claude Code Server - Production Docker Image
+# Free Claude Code Server - Docker Image
 FROM python:3.14-slim
 
 # Set environment variables
@@ -8,7 +8,7 @@ ENV PYTHONUNBUFFERED=1 \
     PORT=8000 \
     HOST=0.0.0.0
 
-# Install comprehensive system dependencies for building Python packages
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     build-essential \
@@ -16,7 +16,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     libssl-dev \
     libffi-dev \
-    zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
@@ -29,13 +28,10 @@ WORKDIR /app
 COPY pyproject.toml uv.lock README.md LICENSE ./
 COPY src ./src
 
-# Install with pip (upgraded for better dependency resolution)
-RUN pip install --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir .
-
-# Clean up unnecessary build files to reduce image size
-RUN find /usr/local -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true && \
-    rm -rf /usr/local/lib/python3.14/site-packages/*/tests /usr/local/lib/python3.14/site-packages/*/test
+# Install uv and use it to sync dependencies (uv.lock is tested/proven)
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    /root/.cargo/bin/uv sync --python 3.14 --no-dev && \
+    /root/.cargo/bin/uv pip install --python 3.14 -e .
 
 # Switch to non-root user
 USER fcc
