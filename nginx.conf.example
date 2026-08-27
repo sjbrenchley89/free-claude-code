@@ -1,0 +1,130 @@
+# Nginx configuration example for Free Claude Code reverse proxy
+# This is a reference configuration. Adapt to your needs.
+# Location: /etc/nginx/sites-available/fcc-server (on Linux)
+
+upstream fcc_backend {
+    server localhost:8000;
+    keepalive 32;
+}
+
+# HTTP redirect to HTTPS (optional, requires SSL certificate)
+server {
+    listen 80;
+    server_name your-domain.com www.your-domain.com;
+
+    # Allow Let's Encrypt validation
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    # Redirect all other traffic to HTTPS
+    location / {
+        return 301 https://$server_name$request_uri;
+    }
+}
+
+# HTTPS server (requires SSL certificate)
+# To get a free certificate, use Let's Encrypt:
+# sudo apt-get install certbot python3-certbot-nginx
+# sudo certbot certonly --nginx -d your-domain.com
+server {
+    listen 443 ssl http2;
+    server_name your-domain.com www.your-domain.com;
+
+    # SSL certificates (from Let's Encrypt or your CA)
+    ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
+
+    # SSL security settings
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+
+    # HSTS (strict transport security)
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    # Security headers
+    add_header X-Frame-Options "DENY" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # Gzip compression
+    gzip on;
+    gzip_types text/plain text/css text/xml text/javascript application/json application/javascript;
+    gzip_min_length 1000;
+    gzip_disable "msie6";
+
+    # Logging
+    access_log /var/log/nginx/fcc-server-access.log;
+    error_log /var/log/nginx/fcc-server-error.log;
+
+    # Proxy to Free Claude Code server
+    location / {
+        proxy_pass http://fcc_backend;
+
+        # Headers
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $server_name;
+
+        # WebSocket support
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        # Timeouts
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+
+        # Buffering
+        proxy_buffering off;
+        proxy_request_buffering off;
+    }
+
+    # Health check endpoint
+    location /health {
+        proxy_pass http://fcc_backend/health;
+        access_log off;
+    }
+}
+
+# HTTP-only server (no SSL)
+# Use this if you're not using HTTPS
+server {
+    listen 80;
+    server_name your-domain.com www.your-domain.com;
+
+    # Logging
+    access_log /var/log/nginx/fcc-server-access.log;
+    error_log /var/log/nginx/fcc-server-error.log;
+
+    # Proxy configuration
+    location / {
+        proxy_pass http://fcc_backend;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # WebSocket support
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        # Timeouts
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+
+    # Health check
+    location /health {
+        proxy_pass http://fcc_backend/health;
+        access_log off;
+    }
+}
