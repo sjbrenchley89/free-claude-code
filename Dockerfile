@@ -1,11 +1,12 @@
-# Free Claude Code Server - Docker Image
-# Python 3.14 slim base with optimized dependency installation
+# Free Claude Code Server - Production Docker Image
 FROM python:3.14-slim
 
-# Set environment variables
+# Set environment variables for Python and system
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONHASHSEED=random \
     PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PORT=8000 \
     HOST=0.0.0.0
 
@@ -17,10 +18,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv package manager for fast dependency resolution
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.cargo/bin:$PATH"
-
 # Create non-root user for security
 RUN useradd -m -u 1000 fcc
 
@@ -28,24 +25,25 @@ RUN useradd -m -u 1000 fcc
 WORKDIR /app
 
 # Copy project files
-COPY pyproject.toml uv.lock README.md LICENSE ./
-COPY src ./src
+COPY --chown=fcc:fcc pyproject.toml uv.lock README.md LICENSE ./
+COPY --chown=fcc:fcc src ./src
 
-# Install the package and dependencies with uv
-RUN uv pip install --system --compile-bytecode .
+# Install uv package manager
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.cargo/bin:$PATH"
 
-# Clean up build dependencies (optional, comment out to reduce layer count)
-# RUN apt-get remove -y build-essential git curl && apt-get autoremove -y
-
-# Change ownership to fcc user
-RUN chown -R fcc:fcc /app
+# Install dependencies and package using uv
+# Use uv to sync all dependencies and install the package
+RUN uv pip compile pyproject.toml -o requirements.txt && \
+    pip install --no-cache-dir --compile -r requirements.txt && \
+    pip install --no-cache-dir --compile -e .
 
 # Switch to non-root user
 USER fcc
 
-# Health check
+# Health check endpoint
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()" || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5).read()" || exit 1
 
 # Expose port
 EXPOSE 8000
