@@ -96,20 +96,22 @@ def create_app(services: ApiServices) -> FastAPI:
         if request_id:
             content["request_id"] = request_id
         response = JSONResponse(status_code=503, content=content)
-        attach_request_id_headers(response, request_id=request_id, path=request.url.path)
+        attach_request_id_headers(
+            response, request_id=request_id, path=request.url.path
+        )
         return response
 
     @app.exception_handler(ChatValidationError)
-    async def chat_validation_error_handler(
-        request: Request, exc: ChatValidationError
-    ):
+    async def chat_validation_error_handler(request: Request, exc: ChatValidationError):
         """Chat request validation failed (400)."""
         request_id = get_request_id(request)
         content = {"code": "ChatValidationError", "message": str(exc)}
         if request_id:
             content["request_id"] = request_id
         response = JSONResponse(status_code=400, content=content)
-        attach_request_id_headers(response, request_id=request_id, path=request.url.path)
+        attach_request_id_headers(
+            response, request_id=request_id, path=request.url.path
+        )
         return response
 
     @app.exception_handler(Exception)
