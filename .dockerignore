@@ -64,7 +64,7 @@ smoke/
 docs/
 *.md
 !README.md
-LICENSE
+!LICENSE
 
 # Misc
 .cache/
