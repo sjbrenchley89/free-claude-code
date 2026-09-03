@@ -80,6 +80,11 @@ class Settings(BaseModel):
         extra="ignore",
     )
 
+    # ==================== Anthropic Claude ====================
+    anthropic_api_key: OptionalNonEmptyString = Field(
+        default=None, validation_alias="ANTHROPIC_API_KEY"
+    )
+
     # ==================== Azure OpenAI ====================
     azure_openai_api_key: OptionalNonEmptyString = Field(
         default=None, validation_alias="AZURE_OPENAI_API_KEY"
@@ -422,6 +427,9 @@ class Settings(BaseModel):
     )
     azure_openai_proxy: OptionalNonEmptyString = Field(
         default=None, validation_alias="AZURE_OPENAI_PROXY"
+    )
+    anthropic_proxy: OptionalNonEmptyString = Field(
+        default=None, validation_alias="ANTHROPIC_PROXY"
     )
     nvidia_nim_proxy: OptionalNonEmptyString = Field(
         default=None, validation_alias="NVIDIA_NIM_PROXY"

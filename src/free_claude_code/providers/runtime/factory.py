@@ -165,6 +165,16 @@ def _create_opencode_go(
     return create_opencode_provider("opencode_go", config, admission)
 
 
+def _create_anthropic(
+    config: ProviderConfig,
+    _settings: Settings,
+    admission: ProviderAdmissionController,
+) -> BaseProvider:
+    from free_claude_code.providers.anthropic import AnthropicProvider
+
+    return AnthropicProvider(config, admission=admission)
+
+
 _SPECIAL_PROVIDER_FACTORIES: dict[str, ProviderFactory] = {
     "nvidia_nim": _create_nvidia_nim,
     "open_router": _create_open_router,
@@ -177,6 +187,7 @@ _SPECIAL_PROVIDER_FACTORIES: dict[str, ProviderFactory] = {
     "vertex": _create_vertex,
     "github_models": _create_github_models,
     "groq": _create_groq,
+    "anthropic": _create_anthropic,
     "opencode_zen": _create_opencode_zen,
     "opencode_go": _create_opencode_go,
 }

@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 # Default upstream base URLs are owned here with the provider catalog.
+ANTHROPIC_DEFAULT_BASE = "https://api.anthropic.com/v1"
 NVIDIA_NIM_DEFAULT_BASE = "https://integrate.api.nvidia.com/v1"
 # Moonshot Kimi OpenAI-compatible Chat Completions API.
 KIMI_DEFAULT_BASE = "https://api.moonshot.ai/v1"
@@ -167,6 +168,15 @@ PROVIDER_CATALOG: dict[str, ProviderDescriptor] = {
         auth_kind=ProviderAuthKind.CONNECTED_ACCOUNT,
         default_base_url=OPENAI_CODEX_DEFAULT_BASE,
         proxy_attr="openai_proxy",
+    ),
+    "anthropic": ProviderDescriptor(
+        provider_id="anthropic",
+        display_name="Anthropic Claude",
+        credential_env="ANTHROPIC_API_KEY",
+        credential_url="https://console.anthropic.com/account/keys",
+        credential_attr="anthropic_api_key",
+        default_base_url=ANTHROPIC_DEFAULT_BASE,
+        proxy_attr="anthropic_proxy",
     ),
     "xai": ProviderDescriptor(
         provider_id="xai",

@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  fcc-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: free-claude-code-server
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      # Server configuration
+      HOST: "0.0.0.0"
+      PORT: "8000"
+
+      # Provider API Keys (add your own)
+      # NVIDIA NIM
+      # NVIDIA_NIM_API_KEY: ${NVIDIA_NIM_API_KEY}
+
+      # OpenRouter
+      # OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+
+      # OpenAI / Azure OpenAI
+      # OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY}
+      # AZURE_OPENAI_BASE_URL: ${AZURE_OPENAI_BASE_URL}
+
+      # Anthropic
+      # ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+
+      # Mistral
+      # MISTRAL_API_KEY: ${MISTRAL_API_KEY}
+      # CODESTRAL_API_KEY: ${CODESTRAL_API_KEY}
+
+      # DeepSeek
+      # DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+
+      # Other providers
+      # Add your provider API keys here
+
+      # Logging
+      LOG_LEVEL: "INFO"
+
+      # Admin UI
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-}
+
+    restart: unless-stopped
+
+    # Resource limits (adjust based on your needs)
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Network configuration
+    networks:
+      - fcc-network
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  fcc-data:
+    driver: local
+
+networks:
+  fcc-network:
+    driver: bridge
