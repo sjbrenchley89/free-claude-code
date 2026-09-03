@@ -28,9 +28,10 @@ WORKDIR /app
 COPY pyproject.toml uv.lock README.md LICENSE ./
 COPY src ./src
 
-# Install uv and use it to install dependencies directly to system Python
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    /root/.cargo/bin/uv pip install --python 3.14 --break-system-packages -e .
+# Install package and dependencies using pip
+# Note: We use pip directly rather than uv to simplify Docker builds.
+# The pyproject.toml declares all dependencies, and pip will resolve them.
+RUN pip install --no-cache-dir -e .
 
 # Switch to non-root user
 USER fcc
