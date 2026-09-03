@@ -13,7 +13,7 @@ NC='\033[0m' # No Color
 
 # Configuration
 PROJECT_NAME="free-claude-code"
-REPO_URL="https://github.com/Alishahryar1/free-claude-code.git"
+REPO_URL="https://github.com/sjbrenchley89/free-claude-code.git"
 DEPLOY_DIR="/opt/free-claude-code"
 ENV_FILE="$DEPLOY_DIR/.env"
 

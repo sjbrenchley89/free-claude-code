@@ -14,7 +14,7 @@ This guide explains how to deploy the Free Claude Code server using Docker and D
 
 ```bash
 # Clone the repository
-git clone https://github.com/Alishahryar1/free-claude-code.git
+git clone https://github.com/sjbrenchley89/free-claude-code.git
 cd free-claude-code
 
 # Start the server
@@ -103,7 +103,7 @@ curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 
 # Clone and deploy
-git clone https://github.com/Alishahryar1/free-claude-code.git
+git clone https://github.com/sjbrenchley89/free-claude-code.git
 cd free-claude-code
 
 # Create secure .env file
@@ -385,7 +385,7 @@ See `.env.example` for complete list.
 
 ## Support & Documentation
 
-- **GitHub Repository**: https://github.com/Alishahryar1/free-claude-code
+- **GitHub Repository**: https://github.com/sjbrenchley89/free-claude-code
 - **Docker Documentation**: https://docs.docker.com/
 - **Docker Compose Reference**: https://docs.docker.com/compose/compose-file/
 - **Free Claude Code Docs**: See README.md
