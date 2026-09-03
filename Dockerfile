@@ -28,10 +28,24 @@ WORKDIR /app
 COPY pyproject.toml uv.lock README.md LICENSE ./
 COPY src ./src
 
-# Install package and dependencies using pip
-# Note: We use pip directly rather than uv to simplify Docker builds.
-# The pyproject.toml declares all dependencies, and pip will resolve them.
-RUN pip install --no-cache-dir -e .
+# Install dependencies from pyproject.toml
+RUN pip install --no-cache-dir \
+    fastapi[standard]>=0.141.1 \
+    uvicorn>=0.52.1 \
+    httpx[socks]>=0.28.1 \
+    httpx2[socks]>=2.7.0 \
+    markdown-it-py>=4.2.0 \
+    pydantic>=2.13.4 \
+    python-dotenv>=1.2.2 \
+    tiktoken>=0.13.0 \
+    python-telegram-bot>=22.8
+
+# Create startup script that runs the server using python -m
+RUN echo '#!/usr/bin/env python\nfrom free_claude_code.cli.commands import serve\nif __name__ == "__main__":\n    serve()' > /app/run_server.py && \
+    chmod +x /app/run_server.py
+
+# Set PYTHONPATH so the src directory is in the Python path
+ENV PYTHONPATH="/app/src:$PYTHONPATH"
 
 # Switch to non-root user
 USER fcc
@@ -43,5 +57,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
 # Expose port
 EXPOSE 8000
 
-# Run the server
-CMD ["fcc-server"]
+# Run the server using the startup script
+CMD ["python", "/app/run_server.py"]
