@@ -119,7 +119,12 @@ skip-magic-trailing-comma = false
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 addopts = "-n auto"
-filterwarnings = ["error"]
+filterwarnings = [
+    "error",
+    # httpx2/httpcore cleanup race with asyncio event loop on Python 3.14
+    "ignore::ResourceWarning",
+    "ignore::pytest.PytestUnraisableExceptionWarning",
+]
 testpaths = ["tests"]
 markers = [
     "live: opt-in local smoke tests that can touch real services",
