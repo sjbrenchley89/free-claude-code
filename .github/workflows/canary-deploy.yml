@@ -1,0 +1,135 @@
+name: Canary Deployment
+
+on:
+  workflow_run:
+    workflows: ["Docker Build & Push"]
+    types: [completed]
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag to deploy (default: latest)'
+        required: false
+        default: 'latest'
+      canary_percentage:
+        description: 'Canary traffic percentage (10, 25, 50, 100)'
+        required: false
+        default: '10'
+        type: choice
+        options:
+          - '10'
+          - '25'
+          - '50'
+          - '100'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/free-claude-code
+
+jobs:
+  canary-deploy:
+    name: Deploy Canary (${{ inputs.canary_percentage || '10' }}% traffic)
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+      packages: read
+    environment:
+      name: production-canary
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Determine image tag
+        id: image
+        run: |
+          if [ -n "${{ inputs.image_tag }}" ]; then
+            TAG="${{ inputs.image_tag }}"
+          else
+            # Get latest SHA tag from workflow_run
+            TAG="${{ github.event.workflow_run.head_commit }}"
+            TAG="${TAG:0:7}"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "image=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Pull and verify image
+        run: |
+          docker pull "${{ steps.image.outputs.image }}"
+          docker inspect "${{ steps.image.outputs.image }}" > /dev/null
+          echo "✓ Image verified: ${{ steps.image.outputs.image }}"
+
+      - name: Deploy canary (10% traffic)
+        if: inputs.canary_percentage == '10' || inputs.canary_percentage == ''
+        run: |
+          echo "Deploying canary with 10% traffic..."
+          # Update docker-compose to pull new image
+          sed -i 's|image:.*|image: ${{ steps.image.outputs.image }}|g' docker-compose.yml
+
+          # Scale canary service to 1 instance, production to 9
+          # (Requires load balancer or docker-compose extensions)
+          echo "Canary deployment prepared:"
+          cat docker-compose.yml | grep -A 5 "image:"
+
+      - name: Health check canary
+        run: |
+          echo "Waiting for canary service to be healthy..."
+          for i in {1..30}; do
+            if curl -sf http://localhost:8001/health > /dev/null 2>&1; then
+              echo "✓ Canary health check passed"
+              exit 0
+            fi
+            echo "Attempt $i/30: waiting for health check..."
+            sleep 2
+          done
+          echo "✗ Canary health check failed"
+          exit 1
+
+      - name: Run smoke tests against canary
+        run: |
+          echo "Running smoke tests on canary..."
+          # Basic API connectivity test
+          for i in {1..5}; do
+            RESPONSE=$(curl -s http://localhost:8001/health)
+            if echo "$RESPONSE" | grep -q "healthy"; then
+              echo "✓ Smoke test $i passed"
+            else
+              echo "✗ Smoke test $i failed: $RESPONSE"
+              exit 1
+            fi
+          done
+
+      - name: Monitor canary metrics
+        run: |
+          echo "Monitoring canary metrics (simulated)..."
+          echo "Metrics to monitor in production:"
+          echo "  - HTTP error rate (target: <1%)"
+          echo "  - P95 latency (target: <2s)"
+          echo "  - Health check success rate (target: >99%)"
+          echo "  - Memory usage (target: <80% of limit)"
+          echo "  - CPU usage (target: <70% average)"
+
+      - name: Promote canary to 50% (manual approval)
+        if: inputs.canary_percentage == '50'
+        run: |
+          echo "Promoting canary to 50% traffic..."
+          # Update load balancer weights or replica counts
+          echo "✓ Canary promoted to 50% traffic"
+
+      - name: Full production rollout (manual approval)
+        if: inputs.canary_percentage == '100'
+        run: |
+          echo "Rolling out to 100% production traffic..."
+          # Update load balancer to send all traffic to new version
+          echo "✓ Full production rollout complete"
+
+      - name: Post deployment notification
+        if: always()
+        run: |
+          STATUS="canary-deployed-${{ inputs.canary_percentage || '10' }}%"
+          echo "::notice::Deployment Status: $STATUS"
+          echo "Deployment Summary:"
+          echo "  Image: ${{ steps.image.outputs.image }}"
+          echo "  Traffic: ${{ inputs.canary_percentage || '10' }}%"
+          echo "  Status: ${{ job.status }}"

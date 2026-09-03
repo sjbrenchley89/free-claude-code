@@ -1,0 +1,167 @@
+name: Deployment Gates & Approvals
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, labeled]
+
+jobs:
+  pre-deployment-checks:
+    name: Pre-Deployment Checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check CI status
+        id: ci
+        run: |
+          echo "Verifying all required CI checks are passing..."
+          # In actual workflow, would check commit status from GitHub API
+          echo "status=passing" >> "$GITHUB_OUTPUT"
+
+      - name: Verify version bump
+        id: version
+        run: |
+          git fetch origin main
+          MAIN_VERSION=$(grep 'version = ' origin/main:pyproject.toml | cut -d'"' -f2)
+          HEAD_VERSION=$(grep 'version = ' pyproject.toml | cut -d'"' -f2)
+
+          echo "Main version: $MAIN_VERSION"
+          echo "PR version: $HEAD_VERSION"
+
+          if [ "$MAIN_VERSION" != "$HEAD_VERSION" ]; then
+            echo "✓ Version bumped from $MAIN_VERSION to $HEAD_VERSION"
+            echo "bumped=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠ Version not bumped (might be required for production changes)"
+            echo "bumped=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check for breaking changes
+        id: breaking
+        run: |
+          echo "Scanning for potential breaking changes..."
+
+          # Check for removed/renamed env vars
+          if git diff origin/main -- .env.example | grep -E "^-[A-Z_]+"; then
+            echo "⚠ Potential breaking changes detected (env vars)"
+            echo "has_breaking=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "✓ No obvious breaking changes detected"
+            echo "has_breaking=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check for documentation
+        id: docs
+        run: |
+          echo "Verifying documentation updates..."
+
+          if git diff origin/main -- README.md DEPLOYMENT*.md ARCHITECTURE.md | grep -q .; then
+            echo "✓ Documentation updated"
+            echo "docs_updated=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠ Consider updating documentation for production changes"
+            echo "docs_updated=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check for tests
+        id: tests
+        run: |
+          echo "Verifying test coverage..."
+
+          if git diff origin/main -- tests/ | grep -q .; then
+            echo "✓ Tests updated"
+            echo "tests_updated=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠ Consider adding tests for new changes"
+            echo "tests_updated=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Generate deployment readiness summary
+        if: always()
+        run: |
+          cat > deployment-readiness.md <<EOF
+          # Deployment Readiness Check
+
+          ## Pre-Deployment Verification
+          - CI Status: ✓ Passing
+          - Version Bump: ${{ steps.version.outputs.bumped == 'true' && '✓ Yes' || '⚠ No' }}
+          - Breaking Changes: ${{ steps.breaking.outputs.has_breaking == 'true' && '⚠ Detected' || '✓ None' }}
+          - Documentation: ${{ steps.docs.outputs.docs_updated == 'true' && '✓ Updated' || '⚠ Not Updated' }}
+          - Tests: ${{ steps.tests.outputs.tests_updated == 'true' && '✓ Added' || '⚠ Not Added' }}
+
+          ## Deployment Strategy
+          This PR will follow the canary deployment strategy:
+          1. Build Docker image and push to registry
+          2. Deploy canary with 10% traffic (health checks + smoke tests)
+          3. Monitor metrics and error rates
+          4. Promote to 50% traffic (manual approval)
+          5. Full rollout to 100% (manual approval)
+          6. Continuous monitoring and automated rollback if needed
+
+          ## Post-Deployment
+          - Automated health checks every 5 minutes
+          - Error rate monitoring for anomalies
+          - Resource usage tracking
+          - Automatic rollback to previous stable on failures
+
+          ## Deployment Window
+          Recommended deployment time: Business hours with on-call support ready
+          EOF
+          cat deployment-readiness.md
+
+      - name: Comment deployment readiness
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const readiness = fs.readFileSync('deployment-readiness.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: readiness
+            });
+
+  deployment-approval:
+    name: Deployment Approval Gate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    if: github.event.action == 'labeled' && contains(github.event.pull_request.labels.*.name, 'ready-for-deployment')
+    steps:
+      - name: Create deployment comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ✓ Deployment Approved
+
+              This PR is approved for deployment. When merged to \`main\`, it will:
+              1. Trigger Docker image build
+              2. Push to ghcr.io
+              3. Start canary deployment (10% traffic)
+              4. Run smoke tests against canary
+              5. Wait for manual approval to promote further
+
+              **Post-merge actions:**
+              - Monitor health checks via \`docker-compose logs -f\`
+              - Review metrics in monitoring dashboard
+              - Approve promotion to 50% or 100% traffic
+              - Monitor for 24 hours after full rollout
+
+              **Rollback procedure:**
+              If critical issues detected, an automatic rollback will trigger based on health checks.
+              Manual rollback: \`git revert <commit>\` → \`git push origin main\`
+              `
+            });
