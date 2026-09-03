@@ -86,7 +86,7 @@ class AnthropicProvider(BaseProvider):
             )
         return frozenset(models)
 
-    def stream_messages(
+    async def stream_messages(
         self,
         request: MessagesRequest,
         input_tokens: int = 0,
@@ -147,7 +147,7 @@ class AnthropicProvider(BaseProvider):
             )
             raise
 
-    def stream_responses(
+    async def stream_responses(
         self,
         request: OpenAIResponsesRequest,
         input_tokens: int = 0,
@@ -160,7 +160,7 @@ class AnthropicProvider(BaseProvider):
         raise NotImplementedError(
             "Anthropic provider does not support OpenAI Responses format"
         )
-        # Make this a generator function (unreachable but needed for type)
+        # Make this an async generator function (unreachable but needed for type)
         yield  # pragma: no cover
 
 
