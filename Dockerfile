@@ -1,5 +1,5 @@
 # Free Claude Code Server - Docker Image
-FROM python:3.14-slim
+FROM python:3.13-slim
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -65,4 +65,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
 EXPOSE 8000
 
 # Run the server - import and call the serve function
-CMD ["python", "-c", "from free_claude_code.cli.commands import serve; serve()"]
+CMD ["python", "-c", "from free_claude_code.cli.entrypoints import serve; serve()"]

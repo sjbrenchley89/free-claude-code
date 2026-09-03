@@ -9,7 +9,7 @@ param(
 
 # Configuration
 $ProjectName = "free-claude-code"
-$RepoUrl = "https://github.com/Alishahryar1/free-claude-code.git"
+$RepoUrl = "https://github.com/sjbrenchley89/free-claude-code.git"
 $DeployDir = "C:\free-claude-code"
 $EnvFile = Join-Path $DeployDir ".env"
 
