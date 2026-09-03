@@ -128,28 +128,98 @@ docker run -d -p 8000:8000 --env-file .env \
 
 ## Current Status
 
-**Docker Builds**: Queued (runs 23-29)
-- Run 25-26: Commit 73f1b52 (workflow fix) - **queued** since 12:57Z
-- Run 27-28: Commit df7e8bd (Python 3.14 revert) - **queued** since 12:59Z
-- Run 29: Merge commit (main branch) - **queued** since 13:00Z
+**Docker Builds**: Testing Python 3.13-slim fix (runs 32-33)
+- Run 32 (push): Commit bc6bba1 (Python 3.13-slim) - **queued** since 13:30Z
+- Run 33 (PR): Commit bc6bba1 (Python 3.13-slim) - **queued** since 13:30Z
+- **Root Cause Identified**: `python:3.14-slim` doesn't exist in Docker Hub yet
+- **Fix Applied**: Changed base image to `python:3.13-slim` (stable and available)
 
 **Expected Outcome When Builds Complete**:
-- ✅ Valid Docker tags generated
-- ✅ Python 3.14-slim image built
+- ✅ Docker build succeeds (no "invalid reference format" error)
+- ✅ Valid Docker tags generated (SHA-based)
+- ✅ Python 3.13-slim image built and pushed
 - ✅ All dependencies installed
 - ✅ Non-root user configured
 - ✅ Images pushed to ghcr.io
 - ✅ Workflow cache updated
 
+## Deployment Phase (IN PROGRESS)
+
+### Documentation Complete ✅
+
+#### Quick Start & References
+- [x] QUICK_START.md - One-page quick reference (5-minute setup)
+- [x] DOCKER_DEPLOYMENT_GUIDE.md - Comprehensive 500+ line guide:
+  - Quick start options (docker-compose, scripts)
+  - Deployment methods (compose, direct, Kubernetes)
+  - Pre-built image usage
+  - Local development setup
+  - Production deployment steps
+  - Monitoring and health checks
+  - Troubleshooting guide
+  - Rollback procedures
+- [x] ENVIRONMENT_SETUP.md - Complete environment variables guide:
+  - All API providers (Anthropic, OpenAI, OpenRouter, Google, NVIDIA, Mistral, AWS)
+  - Application configuration
+  - Performance tuning
+  - Security settings
+  - Environment presets (dev/staging/prod)
+
+### Build Verification (IN PROGRESS)
+
+- [ ] Docker builds complete (runs 32-33, python:3.13-slim)
+- [ ] Build logs show successful image creation
+- [ ] Images pushed to ghcr.io with correct tags
+- [ ] Health check works on built image
+
+### Testing Tasks (PENDING)
+
+1. **Local Docker Testing**
+   - [ ] `docker build -t free-claude-code:test .` - build succeeds
+   - [ ] `docker run` - container starts and health check passes
+   - [ ] Admin UI loads at `http://localhost:8000`
+
+2. **Docker Compose Testing**
+   - [ ] `docker-compose up -d` - starts all services
+   - [ ] `docker-compose ps` - shows running container
+   - [ ] Admin UI loads and responds
+   - [ ] `docker-compose down` - stops cleanly
+
+3. **Deployment Script Testing**
+   - [ ] Linux/macOS: `bash scripts/deploy.sh` runs on clean system
+   - [ ] Windows: `.\scripts\deploy.ps1` runs in PowerShell ISE
+   - [ ] Environment wizard works correctly
+
+4. **Production Readiness**
+   - [ ] Non-root user execution works (uid 1000, user 'fcc')
+   - [ ] Resource limits enforced correctly
+   - [ ] Restart policy set to "unless-stopped"
+   - [ ] Health checks configured
+   - [ ] Logging configured with rotation
+
 ## Next Steps
 
-1. **Monitor build completion** (Check-in scheduled: 13:59Z)
-2. **Test local docker-compose** setup
-3. **Verify deployment scripts** on test systems
-4. **Configure production nginx** (use nginx.conf.example)
-5. **Document environment variables** required per provider
-6. **Set up monitoring** for container health
-7. **Create rollback procedures** for deployments
+1. **Build Verification** (Primary Priority - Awaiting Runner)
+   - Monitor GitHub Actions runs 32-33
+   - Verify python:3.13-slim resolves build failures
+   - Document build success or investigate failures
+
+2. **Local Testing**
+   - Test docker build and docker-compose locally
+   - Verify Admin UI functionality
+   - Test health check endpoints
+
+3. **Production Deployment**
+   - Configure nginx reverse proxy
+   - Set up SSL/TLS certificates
+   - Deploy to VPS or cloud
+   - Monitor application performance
+
+4. **Scaling & Operations** (Post-Launch)
+   - Set up persistent storage backups
+   - Configure monitoring alerts
+   - Document runbooks
+   - Create disaster recovery procedures
 
 ## Files Summary
 
