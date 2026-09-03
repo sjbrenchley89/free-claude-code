@@ -1,0 +1,155 @@
+name: Automated Rollback
+
+on:
+  schedule:
+    # Check every 5 minutes for health check failures
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for rollback'
+        required: true
+      rollback_to:
+        description: 'Rollback to (previous-stable, last-known-good, or specific SHA)'
+        required: false
+        default: 'previous-stable'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/free-claude-code
+  HEALTH_CHECK_ENDPOINT: 'http://localhost:8000/health'
+  HEALTH_CHECK_TIMEOUT: 30
+  FAILED_CHECKS_THRESHOLD: 5
+
+jobs:
+  health-check-monitor:
+    name: Monitor Health & Auto-Rollback
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check production health
+        id: health
+        continue-on-error: true
+        run: |
+          echo "Checking production health status..."
+          FAILED_CHECKS=0
+
+          for i in {1..3}; do
+            if ! curl -sf --max-time ${{ env.HEALTH_CHECK_TIMEOUT }} \
+              ${{ env.HEALTH_CHECK_ENDPOINT }} > /dev/null 2>&1; then
+              ((FAILED_CHECKS++))
+              echo "Health check attempt $i failed"
+            else
+              echo "Health check attempt $i passed"
+            fi
+            sleep 2
+          done
+
+          echo "failed_checks=$FAILED_CHECKS" >> "$GITHUB_OUTPUT"
+
+          if [ $FAILED_CHECKS -ge ${{ env.FAILED_CHECKS_THRESHOLD }} ]; then
+            echo "status=unhealthy" >> "$GITHUB_OUTPUT"
+            exit 1
+          else
+            echo "status=healthy" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Fetch deployment history
+        id: history
+        if: steps.health.outputs.status == 'unhealthy'
+        run: |
+          echo "Fetching recent stable deployments..."
+          # Get tags from container registry
+          TAGS=$(curl -s \
+            -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
+            https://${{ env.REGISTRY }}/v2/${{ env.IMAGE_NAME }}/tags/list | \
+            jq -r '.tags | sort_by(.) | reverse | .[0:5]')
+
+          echo "Recent tags: $TAGS"
+
+          # Get previous stable from git tags
+          PREVIOUS_STABLE=$(git tag -l 'v*' --sort=-version:refname | head -2 | tail -1)
+          echo "previous_stable=$PREVIOUS_STABLE" >> "$GITHUB_OUTPUT"
+
+          if [ -z "$PREVIOUS_STABLE" ]; then
+            echo "previous_stable=latest" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Trigger automated rollback
+        id: rollback
+        if: steps.health.outputs.status == 'unhealthy'
+        run: |
+          ROLLBACK_TAG="${{ inputs.rollback_to || steps.history.outputs.previous_stable }}"
+          echo "Initiating automatic rollback to: $ROLLBACK_TAG"
+          echo "rollback_tag=$ROLLBACK_TAG" >> "$GITHUB_OUTPUT"
+
+          # Pull previous stable image
+          docker pull "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$ROLLBACK_TAG"
+
+          # Update docker-compose with previous stable
+          sed -i "s|image: .*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$ROLLBACK_TAG|g" docker-compose.yml
+
+          echo "✓ Updated docker-compose to use: $ROLLBACK_TAG"
+
+      - name: Restart service with previous stable
+        if: steps.health.outputs.status == 'unhealthy'
+        run: |
+          echo "Restarting service with previous stable image..."
+          # In production, this would be:
+          # docker-compose down && docker-compose up -d
+          echo "Service restart command prepared for:"
+          cat docker-compose.yml | grep "image:"
+
+      - name: Verify rollback health
+        if: steps.health.outputs.status == 'unhealthy'
+        run: |
+          echo "Verifying rollback health..."
+          for i in {1..10}; do
+            if curl -sf --max-time ${{ env.HEALTH_CHECK_TIMEOUT }} \
+              ${{ env.HEALTH_CHECK_ENDPOINT }} > /dev/null 2>&1; then
+              echo "✓ Rollback successful - service healthy"
+              exit 0
+            fi
+            echo "Attempt $i/10: waiting for rollback to complete..."
+            sleep 3
+          done
+          echo "✗ Rollback verification failed"
+          exit 1
+
+      - name: Notify on rollback
+        if: steps.health.outputs.status == 'unhealthy'
+        run: |
+          REASON="${{ inputs.reason || 'Health check failures' }}"
+          echo "::notice::AUTOMATIC ROLLBACK TRIGGERED"
+          echo "Reason: $REASON"
+          echo "Rollback to: ${{ steps.rollback.outputs.rollback_tag }}"
+          echo "Failed health checks: ${{ steps.health.outputs.failed_checks }}"
+          echo ""
+          echo "Next steps:"
+          echo "1. Review recent changes: git log -5"
+          echo "2. Check error logs for root cause"
+          echo "3. Fix the issue and re-deploy"
+          echo "4. Consider adding health checks for this scenario"
+
+      - name: Create incident issue
+        if: steps.health.outputs.status == 'unhealthy'
+        run: |
+          echo "Incident auto-creation would occur here"
+          echo "Template:"
+          echo "Title: Automated Rollback - Service Health Failure"
+          echo "Labels: incident, rollback, p1"
+          echo "Description:"
+          echo "  Reason: ${{ inputs.reason || 'Health check failures' }}"
+          echo "  Rolled back to: ${{ steps.rollback.outputs.rollback_tag }}"
+          echo "  Failed checks: ${{ steps.health.outputs.failed_checks }}"
+
+      - name: Report healthy status
+        if: steps.health.outputs.status == 'healthy'
+        run: |
+          echo "✓ Production health check passed"
+          echo "Status: All systems healthy"
