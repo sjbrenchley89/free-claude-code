@@ -44,13 +44,6 @@ services:
       # Admin UI
       ADMIN_TOKEN: ${ADMIN_TOKEN:-}
 
-    volumes:
-      # Optional: Mount .env file for environment variables
-      # - ./.env:/app/.env:ro
-
-      # Optional: Persist configuration/cache
-      # - fcc-data:/home/fcc/.fcc
-
     restart: unless-stopped
 
     # Resource limits (adjust based on your needs)
