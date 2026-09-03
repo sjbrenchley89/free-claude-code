@@ -9,6 +9,7 @@ from loguru import logger
 
 from free_claude_code.application.model_metadata import ProviderModelInfo
 from free_claude_code.core.anthropic.models import MessagesRequest
+from free_claude_code.core.openai_responses import OpenAIResponsesRequest
 from free_claude_code.core.reasoning import DEFAULT_REASONING_POLICY, ReasoningPolicy
 from free_claude_code.providers.admission import ProviderAdmissionController
 from free_claude_code.providers.base import BaseProvider, ProviderConfig
@@ -45,7 +46,7 @@ class AnthropicProvider(BaseProvider):
             base_url=self._base_url,
         )
 
-    def preflight_stream(
+    def preflight_messages(
         self,
         request: MessagesRequest,
         *,
@@ -57,6 +58,17 @@ class AnthropicProvider(BaseProvider):
             raise ValueError(
                 f"Anthropic provider only supports Claude models, got {model!r}"
             )
+
+    def preflight_responses(
+        self,
+        request: OpenAIResponsesRequest,
+        *,
+        reasoning: ReasoningPolicy = DEFAULT_REASONING_POLICY,
+    ) -> None:
+        """Anthropic provider does not support Responses format."""
+        raise NotImplementedError(
+            "Anthropic provider does not support OpenAI Responses format"
+        )
 
     async def cleanup(self) -> None:
         """Release async client resources."""
@@ -74,7 +86,7 @@ class AnthropicProvider(BaseProvider):
             )
         return frozenset(models)
 
-    async def stream_response(
+    def stream_messages(
         self,
         request: MessagesRequest,
         input_tokens: int = 0,
@@ -85,7 +97,7 @@ class AnthropicProvider(BaseProvider):
     ) -> AsyncIterator[str]:
         """Stream response from Anthropic API in Anthropic SSE format."""
         # Validate request
-        self.preflight_stream(request, reasoning=reasoning)
+        self.preflight_messages(request, reasoning=reasoning)
 
         # Build request kwargs for Anthropic API
         kwargs: dict[str, Any] = {
@@ -134,6 +146,22 @@ class AnthropicProvider(BaseProvider):
                 request_id=request_id,
             )
             raise
+
+    def stream_responses(
+        self,
+        request: OpenAIResponsesRequest,
+        input_tokens: int = 0,
+        *,
+        request_id: str | None = None,
+        response_model: str | None = None,
+        reasoning: ReasoningPolicy = DEFAULT_REASONING_POLICY,
+    ) -> AsyncIterator[str]:
+        """Anthropic provider does not support Responses format."""
+        raise NotImplementedError(
+            "Anthropic provider does not support OpenAI Responses format"
+        )
+        # Make this a generator function (unreachable but needed for type)
+        yield  # pragma: no cover
 
 
 def _convert_messages(messages: list[Any]) -> list[dict[str, Any]]:
