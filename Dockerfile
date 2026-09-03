@@ -6,8 +6,7 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PORT=8000 \
-    HOST=0.0.0.0 \
-    PATH="/app/.venv/bin:$PATH"
+    HOST=0.0.0.0
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -29,10 +28,9 @@ WORKDIR /app
 COPY pyproject.toml uv.lock README.md LICENSE ./
 COPY src ./src
 
-# Install uv and use it to sync dependencies (uv.lock is tested/proven)
+# Install uv and use it to install dependencies directly to system Python
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    /root/.cargo/bin/uv sync --python 3.14 --no-dev && \
-    /root/.cargo/bin/uv pip install --python 3.14 -e .
+    /root/.cargo/bin/uv pip install --python 3.14 --break-system-packages -e .
 
 # Switch to non-root user
 USER fcc
