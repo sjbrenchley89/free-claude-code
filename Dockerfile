@@ -1,6 +1,5 @@
 # Production Dockerfile for free-claude-code proxy server
 # Supports Python 3.14.7 with uv package manager
-
 FROM python:3.14.7-slim
 
 # Install system dependencies
