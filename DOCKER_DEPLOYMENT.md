@@ -443,10 +443,8 @@ response = client.post(
     "/v1/chat/completions",
     json={
         "model": "anthropic/claude-3-5-sonnet-20241022",
-        "messages": [
-            {"role": "user", "content": "Hello, what is your name?"}
-        ]
-    }
+        "messages": [{"role": "user", "content": "Hello, what is your name?"}],
+    },
 )
 
 print(response.json())
