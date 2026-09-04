@@ -6,6 +6,11 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from loguru import logger
 
+from free_claude_code.application.chat import (
+    ChatConflictError,
+    ChatUnavailableError,
+    ChatValidationError,
+)
 from free_claude_code.application.errors import ApplicationError
 from free_claude_code.core.anthropic import anthropic_error_payload
 from free_claude_code.core.diagnostics import (
@@ -81,6 +86,47 @@ def create_app(services: ApiServices) -> FastAPI:
             ),
             request_id=get_request_id(request),
         )
+
+    @app.exception_handler(ChatUnavailableError)
+    async def chat_unavailable_error_handler(
+        request: Request, exc: ChatUnavailableError
+    ):
+        """Chat service is unavailable (503)."""
+        request_id = get_request_id(request)
+        content = {"code": "ChatUnavailableError", "detail": str(exc)}
+        if request_id:
+            content["request_id"] = request_id
+        response = JSONResponse(status_code=503, content=content)
+        attach_request_id_headers(
+            response, request_id=request_id, path=request.url.path
+        )
+        return response
+
+    @app.exception_handler(ChatValidationError)
+    async def chat_validation_error_handler(request: Request, exc: ChatValidationError):
+        """Chat request validation failed (400)."""
+        request_id = get_request_id(request)
+        content = {"code": "ChatValidationError", "detail": str(exc)}
+        if request_id:
+            content["request_id"] = request_id
+        response = JSONResponse(status_code=400, content=content)
+        attach_request_id_headers(
+            response, request_id=request_id, path=request.url.path
+        )
+        return response
+
+    @app.exception_handler(ChatConflictError)
+    async def chat_conflict_error_handler(request: Request, exc: ChatConflictError):
+        """Chat mutation conflicts with current session state (409)."""
+        request_id = get_request_id(request)
+        content = {"code": "ChatConflictError", "detail": str(exc)}
+        if request_id:
+            content["request_id"] = request_id
+        response = JSONResponse(status_code=409, content=content)
+        attach_request_id_headers(
+            response, request_id=request_id, path=request.url.path
+        )
+        return response
 
     @app.exception_handler(Exception)
     async def general_error_handler(request: Request, exc: Exception):
