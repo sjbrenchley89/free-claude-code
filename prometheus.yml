@@ -1,0 +1,31 @@
+# Prometheus configuration for free-claude-code monitoring
+global:
+  scrape_interval: 15s      # Scrape interval
+  evaluation_interval: 15s  # Evaluation interval
+  external_labels:
+    cluster: 'free-claude-code'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+# Rule files
+rule_files: []
+
+scrape_configs:
+  # free-claude-code application metrics
+  - job_name: 'free-claude-code'
+    static_configs:
+      - targets: ['fcc-server:8082']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    scheme: 'http'
+
+  # Optional: Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
