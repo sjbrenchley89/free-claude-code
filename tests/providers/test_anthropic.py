@@ -83,7 +83,7 @@ def test_supports_claude_models(anthropic_config):
 
     # Provider should validate Claude models
     request = make_request(model="claude-opus-5")
-    provider.preflight_stream(request)  # Should not raise
+    provider.preflight_messages(request)  # Should not raise
 
 
 def test_rejects_non_claude_models(anthropic_config):
@@ -97,7 +97,7 @@ def test_rejects_non_claude_models(anthropic_config):
     # Provider should reject non-Claude models
     request = make_request(model="gpt-4")
     with pytest.raises(ValueError):  # Should raise validation error
-        provider.preflight_stream(request)
+        provider.preflight_messages(request)
 
 
 @pytest.mark.asyncio
@@ -119,7 +119,7 @@ async def test_stream_messages_success(anthropic_provider):
     with patch.object(
         anthropic_provider._client.messages, "stream", return_value=mock_stream
     ):
-        stream = anthropic_provider.stream_response(request)
+        stream = anthropic_provider.stream_messages(request)
         assert stream is not None
 
 
@@ -134,7 +134,7 @@ def test_rejects_disabled_tool_use(anthropic_config):
     # Request with disabled tool use should be rejected
     request = make_request(tools=[{"name": "test", "description": "test"}])
     # Provider configuration should handle this appropriately
-    provider.preflight_stream(request)  # May warn but should not fail
+    provider.preflight_messages(request)  # May warn but should not fail
 
 
 def test_respects_rate_limits(anthropic_config):

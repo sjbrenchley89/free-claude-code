@@ -6,6 +6,10 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from loguru import logger
 
+from free_claude_code.application.chat import (
+    ChatUnavailableError,
+    ChatValidationError,
+)
 from free_claude_code.application.errors import ApplicationError
 from free_claude_code.core.anthropic import anthropic_error_payload
 from free_claude_code.core.diagnostics import (
@@ -21,6 +25,7 @@ from free_claude_code.core.version import package_version
 
 from .admin_cache import AdminNoStoreMiddleware, attach_admin_no_store
 from .admin_routes import router as admin_router
+from .chat_routes import router as chat_router
 from .health_routes import router as health_router
 from .ports import ApiServices
 from .request_errors import ordinary_application_error_response
@@ -43,6 +48,7 @@ def create_app(services: ApiServices) -> FastAPI:
     app.add_middleware(RequestCorrelationMiddleware)
 
     app.include_router(admin_router)
+    app.include_router(chat_router)
     app.include_router(health_router)
     app.include_router(router)
 
@@ -79,6 +85,34 @@ def create_app(services: ApiServices) -> FastAPI:
             ),
             request_id=get_request_id(request),
         )
+
+    @app.exception_handler(ChatUnavailableError)
+    async def chat_unavailable_error_handler(
+        request: Request, exc: ChatUnavailableError
+    ):
+        """Chat service is unavailable (503)."""
+        request_id = get_request_id(request)
+        content = {"code": "ChatUnavailableError", "message": str(exc)}
+        if request_id:
+            content["request_id"] = request_id
+        response = JSONResponse(status_code=503, content=content)
+        attach_request_id_headers(
+            response, request_id=request_id, path=request.url.path
+        )
+        return response
+
+    @app.exception_handler(ChatValidationError)
+    async def chat_validation_error_handler(request: Request, exc: ChatValidationError):
+        """Chat request validation failed (400)."""
+        request_id = get_request_id(request)
+        content = {"code": "ChatValidationError", "message": str(exc)}
+        if request_id:
+            content["request_id"] = request_id
+        response = JSONResponse(status_code=400, content=content)
+        attach_request_id_headers(
+            response, request_id=request_id, path=request.url.path
+        )
+        return response
 
     @app.exception_handler(Exception)
     async def general_error_handler(request: Request, exc: Exception):

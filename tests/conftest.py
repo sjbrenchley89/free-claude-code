@@ -22,6 +22,17 @@ os.environ["PTB_TIMEDELTA"] = "1"
 os.environ["ANTHROPIC_AUTH_TOKEN"] = ""
 
 
+def pytest_configure(config):
+    """Configure pytest to suppress asyncio event loop cleanup warnings from httpx2.
+
+    These warnings occur during parallel test execution when httpx2 tries to
+    clean up connections after the event loop has been closed. They're harmless
+    and don't affect test functionality, just cleanup ordering in async teardown.
+    """
+    # Suppress specific asyncio warnings that occur during parallel testing
+    logging.getLogger("asyncio").setLevel(logging.CRITICAL)
+
+
 @pytest.fixture(autouse=True)
 def _isolate_managed_config(monkeypatch, tmp_path):
     """Keep every test away from real home, checkout, and running-server config."""

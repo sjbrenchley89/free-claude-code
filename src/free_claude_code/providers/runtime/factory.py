@@ -145,6 +145,26 @@ def _create_groq(
     return GroqProvider(config, admission=admission)
 
 
+def _create_opencode_zen(
+    config: ProviderConfig,
+    _settings: Settings,
+    admission: ProviderAdmissionController,
+) -> BaseProvider:
+    from free_claude_code.providers.opencode import create_opencode_provider
+
+    return create_opencode_provider("opencode_zen", config, admission)
+
+
+def _create_opencode_go(
+    config: ProviderConfig,
+    _settings: Settings,
+    admission: ProviderAdmissionController,
+) -> BaseProvider:
+    from free_claude_code.providers.opencode import create_opencode_provider
+
+    return create_opencode_provider("opencode_go", config, admission)
+
+
 def _create_anthropic(
     config: ProviderConfig,
     _settings: Settings,
@@ -168,6 +188,8 @@ _SPECIAL_PROVIDER_FACTORIES: dict[str, ProviderFactory] = {
     "github_models": _create_github_models,
     "groq": _create_groq,
     "anthropic": _create_anthropic,
+    "opencode_zen": _create_opencode_zen,
+    "opencode_go": _create_opencode_go,
 }
 _INJECTED_PROVIDER_IDS = {"openai"}
 
