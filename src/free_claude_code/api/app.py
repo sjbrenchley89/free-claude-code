@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from loguru import logger
 
 from free_claude_code.application.chat import (
+    ChatConflictError,
     ChatUnavailableError,
     ChatValidationError,
 )
@@ -92,7 +93,7 @@ def create_app(services: ApiServices) -> FastAPI:
     ):
         """Chat service is unavailable (503)."""
         request_id = get_request_id(request)
-        content = {"code": "ChatUnavailableError", "message": str(exc)}
+        content = {"code": "ChatUnavailableError", "detail": str(exc)}
         if request_id:
             content["request_id"] = request_id
         response = JSONResponse(status_code=503, content=content)
@@ -105,10 +106,23 @@ def create_app(services: ApiServices) -> FastAPI:
     async def chat_validation_error_handler(request: Request, exc: ChatValidationError):
         """Chat request validation failed (400)."""
         request_id = get_request_id(request)
-        content = {"code": "ChatValidationError", "message": str(exc)}
+        content = {"code": "ChatValidationError", "detail": str(exc)}
         if request_id:
             content["request_id"] = request_id
         response = JSONResponse(status_code=400, content=content)
+        attach_request_id_headers(
+            response, request_id=request_id, path=request.url.path
+        )
+        return response
+
+    @app.exception_handler(ChatConflictError)
+    async def chat_conflict_error_handler(request: Request, exc: ChatConflictError):
+        """Chat mutation conflicts with current session state (409)."""
+        request_id = get_request_id(request)
+        content = {"code": "ChatConflictError", "detail": str(exc)}
+        if request_id:
+            content["request_id"] = request_id
+        response = JSONResponse(status_code=409, content=content)
         attach_request_id_headers(
             response, request_id=request_id, path=request.url.path
         )
