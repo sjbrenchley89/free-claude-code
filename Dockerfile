@@ -1,68 +1,40 @@
-# Free Claude Code Server - Docker Image
-FROM python:3.13-slim
+# Production Dockerfile for free-claude-code proxy server
+# Supports Python 3.14.7 with uv package manager
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PORT=8000 \
-    HOST=0.0.0.0
+FROM python:3.14.7-slim
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    build-essential \
-    git \
     curl \
-    libssl-dev \
-    libffi-dev \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
-
-# Create non-root user
-RUN useradd -m -u 1000 fcc
 
 # Set working directory
 WORKDIR /app
 
+# Install uv package manager
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    export PATH="/root/.cargo/bin:$PATH" && \
+    uv --version
+
 # Copy project files
-COPY pyproject.toml uv.lock README.md LICENSE ./
+COPY pyproject.toml uv.lock ./
 COPY src ./src
+COPY scripts ./scripts
 
-# Install all dependencies from pyproject.toml
-RUN pip install --no-cache-dir \
-    'fastapi[standard]>=0.141.1' \
-    'uvicorn>=0.52.1' \
-    'httpx[socks]>=0.28.1' \
-    'httpx2[socks]>=2.7.0,<3' \
-    'markdown-it-py>=4.2.0' \
-    'pydantic>=2.13.4' \
-    'python-dotenv>=1.2.2' \
-    'tiktoken>=0.13.0' \
-    'python-telegram-bot>=22.8' \
-    'discord.py>=2.7.1' \
-    'openai>=3.2.0' \
-    'anthropic>=0.40.0' \
-    'loguru>=0.7.0' \
-    'aiohttp>=3.14.3' \
-    'jsonschema>=4.25.0' \
-    'google-auth[requests]>=2.56.3' \
-    'requests[socks]>=2.34.2'
+# Install dependencies with uv
+ENV PATH="/root/.cargo/bin:$PATH"
+RUN uv sync --frozen
 
-# Set PYTHONPATH so the src directory is in the Python path
-ENV PYTHONPATH="/app/src:$PYTHONPATH"
-
-# Adjust permissions for the app directory
-RUN chown -R fcc:fcc /app
-
-# Switch to non-root user
-USER fcc
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()" || exit 1
+# Create config directory
+RUN mkdir -p /etc/fcc
 
 # Expose port
-EXPOSE 8000
+EXPOSE 8082
 
-# Run the server - import and call the serve function
-CMD ["python", "-c", "from free_claude_code.cli.entrypoints import serve; serve()"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD uv run python -c "import httpx; httpx.get('http://localhost:8082/health', timeout=5)" || exit 1
+
+# Run the server
+CMD ["uv", "run", "fcc-server"]
