@@ -56,11 +56,11 @@ check_dependencies() {
         print_success "Docker $(docker --version)"
     fi
 
-    if ! command -v docker-compose &> /dev/null; then
+    if ! command -v docker &> /dev/null || ! docker compose version &> /dev/null; then
         print_error "Docker Compose is not installed"
         missing=$((missing + 1))
     else
-        print_success "Docker Compose $(docker-compose --version)"
+        print_success "Docker Compose $(docker compose version)"
     fi
 
     if ! command -v curl &> /dev/null; then
@@ -335,7 +335,7 @@ start_services() {
 
     print_info "Starting services with docker-compose..."
     cd "$PROJECT_ROOT"
-    docker-compose up -d
+    docker compose up -d
 
     print_success "Services started"
 
@@ -363,7 +363,7 @@ stop_services() {
     print_header "Stopping Services"
 
     cd "$PROJECT_ROOT"
-    docker-compose down
+    docker compose down
 
     print_success "Services stopped"
 }
@@ -403,7 +403,7 @@ run_tests() {
 
 view_logs() {
     print_header "Server Logs"
-    docker-compose logs -f fcc-server
+    docker compose logs -f fcc-server
 }
 
 show_help() {
