@@ -1,6 +1,6 @@
 """The shared OpenAI-chat provider owns explicit request preflight."""
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Mapping
 
 import pytest
 
@@ -21,6 +21,7 @@ class RecordingOpenAIProvider(OpenAIChatProvider):
         request: MessagesRequest,
         *,
         reasoning: ReasoningPolicy = DEFAULT_REASONING_POLICY,
+        model_info: ProviderModelInfo | None = None,
     ) -> dict:
         self.build_calls.append((request, reasoning))
         return {}
@@ -41,6 +42,8 @@ class ProviderWithoutPreflight(BaseProvider):
         request_id: str | None = None,
         response_model: str | None = None,
         reasoning: ReasoningPolicy = DEFAULT_REASONING_POLICY,
+        request_headers: Mapping[str, str] | None = None,
+        model_info: ProviderModelInfo | None = None,
     ) -> AsyncIterator[str]:
         if False:
             yield ""

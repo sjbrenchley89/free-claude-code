@@ -6,9 +6,18 @@ from dataclasses import dataclass, field
 from typing import cast
 
 from free_claude_code.core.anthropic import ReasoningReplayMode
+from free_claude_code.core.history_replay import (
+    has_readable_replay,
+    is_replay,
+    readable_reasoning,
+    reasoning_context,
+    reasoning_detail,
+    tool_history_context,
+)
 from free_claude_code.core.json_types import JsonObject, JsonValue
 from free_claude_code.core.openai_chat import (
     IMAGE_TOOL_RESULT_MARKER,
+    ChatToolResultImages,
     close_chat_tool_result_turns,
     computer_screenshot_label,
     image_tool_result_label,
@@ -21,15 +30,16 @@ from .models import OpenAIResponsesRequest
 from .reasoning import (
     combine_reasoning,
     encrypted_reasoning_from_item,
-    reasoning_text_from_item,
 )
 from .tools import (
     call_id_from_item,
+    custom_tool_description,
+    custom_tool_input_schema,
     custom_tool_input_text,
+    flatten_responses_tool_name,
     optional_str,
     parse_arguments,
     required_str,
-    responses_tool_name_to_anthropic_name,
 )
 
 _PASSIVE_TOOL_TYPES = frozenset(
@@ -71,22 +81,31 @@ class ResponsesChatRequest:
 class _PendingReasoning:
     text: str | None = None
     encrypted: list[str] = field(default_factory=list)
+    contexts: list[str] = field(default_factory=list)
 
     def add(self, item: Mapping[str, JsonValue]) -> None:
-        self.text = combine_reasoning(self.text, reasoning_text_from_item(item))
         if encrypted := encrypted_reasoning_from_item(item):
             self.encrypted.append(encrypted)
+            if has_readable_replay(encrypted):
+                return
+        for text, summary in readable_reasoning(item):
+            if summary:
+                self.contexts.append(reasoning_context(text, summary=True))
+            else:
+                self.text = combine_reasoning(self.text, text)
 
     @property
     def empty(self) -> bool:
-        return self.text is None and not self.encrypted
+        return self.text is None and not self.encrypted and not self.contexts
 
-    def take(self) -> tuple[str | None, list[str]]:
+    def take(self) -> tuple[str | None, list[str], list[str]]:
         text = self.text
         encrypted = list(self.encrypted)
         self.text = None
         self.encrypted.clear()
-        return text, encrypted
+        contexts = list(self.contexts)
+        self.contexts.clear()
+        return text, encrypted, contexts
 
 
 class _ResponsesChatInputBuilder:
@@ -144,6 +163,22 @@ class _ResponsesChatInputBuilder:
             image = _image_part(item, context="input_image")
             self._flush_reasoning()
             self.messages.append({"role": "user", "content": [image]})
+            return
+        if isinstance(item_type, str) and item_type.endswith(("_call", "_result")):
+            if item.get("status") not in {
+                None,
+                "completed",
+                "failed",
+                "incomplete",
+                "interrupted",
+            }:
+                raise ResponsesConversionError(
+                    "An active hosted tool cannot continue through Chat Completions."
+                )
+            self._flush_reasoning()
+            self.messages.append(
+                {"role": "assistant", "content": tool_history_context(item)}
+            )
 
     def finish(self) -> tuple[list[str], list[dict[str, object]]]:
         self._flush_rich_outputs()
@@ -186,6 +221,7 @@ class _ResponsesChatInputBuilder:
                 parse_arguments(raw_arguments)
             except ResponsesConversionError as exc:
                 self._quarantined_call_ids.add(call_id)
+                self._pending_reasoning.take()
                 trace_event(
                     stage="responses",
                     event="responses.input.function_call_quarantined",
@@ -214,6 +250,8 @@ class _ResponsesChatInputBuilder:
                 "function": {"name": name, "arguments": arguments},
             }
         )
+        if self._reasoning_replay is ReasoningReplayMode.REASONING_CONTENT:
+            message.setdefault("reasoning_content", "")
 
     def _add_tool_output(
         self, item: Mapping[str, JsonValue], *, function: bool
@@ -285,21 +323,34 @@ class _ResponsesChatInputBuilder:
         if not self._pending_rich_output_parts:
             return
         self.messages.append(
-            {
-                "role": "user",
-                "content": list(self._pending_rich_output_parts),
-            }
+            cast(
+                dict[str, object],
+                ChatToolResultImages(
+                    role="user",
+                    content=cast(
+                        list[JsonValue], list(self._pending_rich_output_parts)
+                    ),
+                ),
+            )
         )
         self._pending_rich_output_parts.clear()
 
     def _apply_pending_reasoning(self, message: dict[str, object]) -> None:
-        text, encrypted = self._pending_reasoning.take()
+        text, encrypted, contexts = self._pending_reasoning.take()
+        if contexts:
+            message["content"] = "\n\n".join(
+                [*contexts, str(message.get("content") or "")]
+            ).rstrip()
         if text is not None:
             _apply_reasoning_text(message, text, self._reasoning_replay)
-        if encrypted and self._structured_reasoning_details:
-            message["reasoning_details"] = [
-                _encrypted_reasoning_detail(value) for value in encrypted
-            ]
+        if encrypted:
+            details = message.setdefault("reasoning_details", [])
+            if isinstance(details, list):
+                for value in encrypted:
+                    if self._structured_reasoning_details or is_replay(value):
+                        details.extend(reasoning_detail(value))
+            if not details:
+                message.pop("reasoning_details", None)
 
 
 def build_responses_chat_request(
@@ -458,7 +509,7 @@ def _image_part(part: Mapping[str, JsonValue], *, context: str) -> dict[str, obj
 def _tool_identity_name(item: Mapping[str, JsonValue]) -> str:
     name = required_str(item.get("name"), f"{item.get('type')}.name")
     namespace = optional_str(item.get("namespace"))
-    return responses_tool_name_to_anthropic_name(name, namespace=namespace)
+    return flatten_responses_tool_name(name, namespace=namespace)
 
 
 def _arguments_text(value: JsonValue) -> str:
@@ -505,28 +556,23 @@ def _apply_reasoning_text(
     message: dict[str, object], text: str, mode: ReasoningReplayMode
 ) -> None:
     if mode in {ReasoningReplayMode.REASONING_CONTENT, ReasoningReplayMode.REASONING}:
-        message[mode.value] = text
+        previous = message.get(mode.value)
+        message[mode.value] = combine_reasoning(
+            previous if isinstance(previous, str) else None, text
+        )
         return
-    if mode is not ReasoningReplayMode.THINK_TAGS:
+    replay = (
+        f"<think>\n{text}\n</think>"
+        if mode is ReasoningReplayMode.THINK_TAGS
+        else reasoning_context(text)
+    )
+    if not replay:
         return
-    replay = f"<think>\n{text}\n</think>"
     content = message.get("content")
     if isinstance(content, str) and content:
         message["content"] = f"{replay}\n\n{content}"
     else:
         message["content"] = replay
-
-
-def _encrypted_reasoning_detail(value: str) -> object:
-    try:
-        parsed = json.loads(value)
-    except json.JSONDecodeError:
-        parsed = None
-    if isinstance(parsed, Mapping):
-        return dict(parsed)
-    if isinstance(parsed, list):
-        return parsed
-    return {"type": "reasoning.encrypted", "data": value}
 
 
 def _chat_tools(
@@ -591,7 +637,7 @@ def _chat_function_tool(
     nested = tool.get("function")
     source = nested if isinstance(nested, Mapping) else tool
     name = required_str(source.get("name"), "tool.name")
-    wire_name = responses_tool_name_to_anthropic_name(name, namespace=namespace)
+    wire_name = flatten_responses_tool_name(name, namespace=namespace)
     parameters = source.get("parameters")
     if parameters is None:
         parameters = {"type": "object", "properties": {}}
@@ -617,43 +663,14 @@ def _chat_custom_tool(
     nested = tool.get("custom")
     source = nested if isinstance(nested, Mapping) else tool
     name = required_str(source.get("name"), "tool.name")
-    wire_name = responses_tool_name_to_anthropic_name(name, namespace=namespace)
+    wire_name = flatten_responses_tool_name(name, namespace=namespace)
     function: dict[str, object] = {
         "name": wire_name,
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "input": {
-                    "type": "string",
-                    "description": "Free-form input for the custom tool.",
-                }
-            },
-            "required": ["input"],
-        },
+        "parameters": custom_tool_input_schema(),
     }
-    if description := _custom_tool_description(source):
+    if description := custom_tool_description(source):
         function["description"] = description
     return {"type": "function", "function": function}, wire_name
-
-
-def _custom_tool_description(source: Mapping[str, JsonValue]) -> str | None:
-    parts: list[str] = []
-    if description := optional_str(source.get("description")):
-        parts.append(description)
-    format_value = source.get("format")
-    if isinstance(format_value, Mapping):
-        format_type = optional_str(format_value.get("type"))
-        if format_type == "text":
-            parts.append("Custom tool input format: unconstrained text.")
-        elif format_type == "grammar":
-            syntax = optional_str(format_value.get("syntax"))
-            definition = optional_str(format_value.get("definition"))
-            guidance = "Custom tool input format: grammar"
-            if syntax:
-                guidance = f"{guidance} ({syntax})"
-            guidance = f"{guidance}: {definition}" if definition else f"{guidance}."
-            parts.append(guidance)
-    return "\n\n".join(parts) if parts else None
 
 
 def _chat_tool_choice(
@@ -682,7 +699,7 @@ def _chat_tool_choice(
     namespace = optional_str(choice.get("namespace")) or optional_str(
         value.get("namespace")
     )
-    wire_name = responses_tool_name_to_anthropic_name(name, namespace=namespace)
+    wire_name = flatten_responses_tool_name(name, namespace=namespace)
     if wire_name not in available_names:
         return None
     return {"type": "function", "function": {"name": wire_name}}

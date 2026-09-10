@@ -15,10 +15,10 @@ OPENAI_AUTH_FILENAME = "openai.json"
 OPENAI_AUTH_LOCK_FILENAME = "openai.lock"
 CONFIG_LOCK_FILENAME = "config.lock"
 FCC_TEMP_DIRNAME = "tmp"
-AIDER_TEMP_DIRNAME = "aider"
-CHAT_STATE_DIRNAME = "chat"
-CHAT_DATABASE_FILENAME = "chat.db"
-CHAT_LOCK_FILENAME = "chat.lock"
+LAUNCHER_TEMP_DIRNAME = "launchers"
+CODE_STATE_DIRNAME = "code"
+CODE_DATABASE_FILENAME = "code.db"
+CODE_LOCK_FILENAME = "code.lock"
 
 
 def config_dir_path() -> Path:
@@ -39,28 +39,20 @@ def config_lock_path() -> Path:
     return config_dir_path() / CONFIG_LOCK_FILENAME
 
 
-def aider_temp_dir_path() -> Path:
-    """Return the base directory for managed per-launch Aider files."""
+def launcher_temp_dir_path() -> Path:
+    """Return the base directory for private native launcher configuration."""
 
-    return config_dir_path() / FCC_TEMP_DIRNAME / AIDER_TEMP_DIRNAME
-
-
-def chat_state_dir_path() -> Path:
-    """Return the managed Chat Sessions state directory."""
-
-    return config_dir_path() / CHAT_STATE_DIRNAME
+    return config_dir_path() / FCC_TEMP_DIRNAME / LAUNCHER_TEMP_DIRNAME
 
 
-def chat_database_path() -> Path:
-    """Return the managed Chat Sessions database path."""
+def code_database_path() -> Path:
+    """Return the managed Code sessions database path."""
+    return config_dir_path() / CODE_STATE_DIRNAME / CODE_DATABASE_FILENAME
 
-    return chat_state_dir_path() / CHAT_DATABASE_FILENAME
 
-
-def chat_lock_path() -> Path:
-    """Return the exclusive Chat Sessions process-lock path."""
-
-    return chat_state_dir_path() / CHAT_LOCK_FILENAME
+def code_lock_path() -> Path:
+    """Return the exclusive Code sessions process-lock path."""
+    return config_dir_path() / CODE_STATE_DIRNAME / CODE_LOCK_FILENAME
 
 
 def legacy_env_paths() -> tuple[Path, ...]:
@@ -101,3 +93,8 @@ def openai_auth_lock_path() -> Path:
     """Return the cross-process lock path for ChatGPT credentials."""
 
     return config_dir_path() / AUTH_DIRNAME / OPENAI_AUTH_LOCK_FILENAME
+
+
+def github_copilot_auth_path() -> Path:
+    """Return FCC connection state; native Copilot retains credentials."""
+    return config_dir_path() / AUTH_DIRNAME / "github_copilot.json"

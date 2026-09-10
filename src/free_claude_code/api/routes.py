@@ -1,5 +1,7 @@
 """FastAPI route handlers."""
 
+from collections.abc import Mapping
+
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from loguru import logger
 
@@ -27,6 +29,7 @@ from .model_catalog import (
     ModelCatalogView,
     ModelsListResponse,
     build_models_list_response,
+    build_muse_models_list_response,
 )
 from .ports import ApiServices
 from .request_errors import ordinary_application_error_response
@@ -45,15 +48,18 @@ async def _create_messages_response(
     request_data: MessagesRequest,
     *,
     request_id: str,
+    request_headers: Mapping[str, str] | None = None,
 ) -> object:
     lease: RequestRuntimeLease | None = None
     try:
-        lease = await services.requests.acquire()
+        lease = await services.requests.acquire(include_model_infos=True)
         handler = MessagesHandler(
             lease.settings,
             provider_resolver=_provider_resolver(lease),
             token_counter=get_token_count,
             generation_id=lease.generation_id,
+            request_headers=request_headers,
+            model_infos=lease.model_infos,
         )
         response = await handler.create(request_data, request_id=request_id)
     except ApplicationError as exc:
@@ -77,6 +83,7 @@ async def _create_responses_response(
     request_data: OpenAIResponsesRequest,
     *,
     request_id: str,
+    request_headers: Mapping[str, str] | None = None,
 ) -> object:
     lease: RequestRuntimeLease | None = None
     try:
@@ -85,6 +92,7 @@ async def _create_responses_response(
             lease.settings,
             provider_resolver=_provider_resolver(lease),
             generation_id=lease.generation_id,
+            request_headers=request_headers,
         )
         response = await handler.create(request_data, request_id=request_id)
     except ApplicationError as exc:
@@ -119,6 +127,7 @@ async def create_message(
         services,
         request_data,
         request_id=get_request_id(request),
+        request_headers=request.headers,
     )
 
 
@@ -139,6 +148,7 @@ async def create_response(
         services,
         request_data,
         request_id=get_request_id(request),
+        request_headers=request.headers,
     )
 
 
@@ -219,11 +229,7 @@ async def list_muse_models(
 ):
     """List the direct Responses models expected by Muse Code."""
     trace_event(stage="ingress", event="free_claude_code.api.models.list", source="api")
-    return build_models_list_response(
-        settings,
-        services.requests,
-        view=ModelCatalogView.RESPONSES,
-    )
+    return build_muse_models_list_response(settings, services.requests)
 
 
 @router.post("/stop")

@@ -2,15 +2,16 @@
 
 import json
 import uuid
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from free_claude_code.core.json_types import JsonObject, JsonValue
 from free_claude_code.core.model_capabilities import ModelInputModality
 
-from .model_catalog import ClientModel, client_models_from_response
+from .model_catalog import ClientModel
 
 SUPPORTED_REASONING_LEVELS: list[JsonObject] = [
+    {"effort": "none", "description": "Turn reasoning off"},
     {"effort": "low", "description": "Fast responses with lighter reasoning"},
     {
         "effort": "medium",
@@ -21,6 +22,7 @@ SUPPORTED_REASONING_LEVELS: list[JsonObject] = [
         "effort": "xhigh",
         "description": "Extra high reasoning depth for complex problems",
     },
+    {"effort": "max", "description": "Maximum reasoning effort"},
 ]
 
 CODEX_BASE_INSTRUCTIONS = (
@@ -30,15 +32,13 @@ CODEX_BASE_INSTRUCTIONS = (
 )
 
 
-def build_codex_model_catalog(models_response: Mapping[str, JsonValue]) -> JsonObject:
+def build_codex_model_catalog(models: Sequence[ClientModel]) -> JsonObject:
     """Convert FCC `/v1/models` data into Codex `model_catalog_json` payload."""
 
     return {
         "models": [
             _codex_catalog_entry(model, priority=priority)
-            for priority, model in enumerate(
-                client_models_from_response(models_response)
-            )
+            for priority, model in enumerate(models)
         ]
     }
 

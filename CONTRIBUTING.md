@@ -8,7 +8,6 @@ Thanks for helping improve Free Claude Code. Keep changes focused, test the beha
 - Do not open Docker integration pull requests.
 - For bugs, include every model mapping, the active model when the failure occurred, the complete error, and reproducible steps.
 - Add focused tests for behavior changes and relevant edge cases.
-- Read [ARCHITECTURE.md](ARCHITECTURE.md) before changing package boundaries, providers, protocol conversion, launchers, or messaging.
 
 ## Development Setup
 
@@ -59,5 +58,3 @@ GitHub CI runs Ruff in check-only mode and also bans `# type: ignore`, `# ty: ig
 ## Versioning
 
 Changes to runtime code, packaging, dependencies, or install/CI scripts require a semantic version bump in `pyproject.toml` and a matching `uv lock` update in the same commit. Documentation, tests, smoke coverage, and repository configuration do not require a version bump by themselves.
-
-See [ARCHITECTURE.md](ARCHITECTURE.md) for extension checklists and the full system design.
