@@ -5,6 +5,7 @@ from typing import Any
 
 from free_claude_code.core.anthropic.streaming import AnthropicStreamLedger
 from free_claude_code.core.anthropic.usage import anthropic_input_usage_fields
+from free_claude_code.core.history_replay import is_replay
 from free_claude_code.core.openai_tool_names import OpenAIToolNameCodec
 
 
@@ -16,12 +17,14 @@ class ResponsesStreamFailure(RuntimeError):
         message: str,
         *,
         code: str | None = None,
+        body: dict[str, Any] | None = None,
         event_type: str | None = None,
         payload: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(message)
         self.message = message
         self.code = code
+        self.body = body
         self.event_type = event_type
         self.payload = payload
 
@@ -178,6 +181,15 @@ class ResponsesProviderStream:
             if not isinstance(encrypted, str) or not encrypted:
                 encrypted = self._encrypted_reasoning.get(item_id)
             if isinstance(encrypted, str) and encrypted:
+                if is_replay(encrypted) and self.ledger.blocks.thinking_started:
+                    return [
+                        self.ledger.content_block_delta(
+                            self.ledger.blocks.thinking_index,
+                            "signature_delta",
+                            encrypted,
+                        ),
+                        self.ledger.stop_thinking_block(),
+                    ]
                 events = list(self.ledger.close_content_blocks())
                 index = self.ledger.blocks.allocate_index()
                 events.append(
@@ -249,12 +261,14 @@ def responses_stream_failure_from_event(
     response = data.get("response")
     response = response if isinstance(response, dict) else {}
     error = response.get("error", data.get("error"))
-    error = error if isinstance(error, dict) else {}
+    if not isinstance(error, dict):
+        error = data if event_type == "error" else {}
     message = error.get("message")
-    code = error.get("code", error.get("type"))
+    code = error.get("code") or error.get("type")
     return ResponsesStreamFailure(
         message if isinstance(message, str) and message else "OpenAI response failed.",
         code=code if isinstance(code, str) else None,
+        body=dict(error),
         event_type=event_type,
         payload=data,
     )

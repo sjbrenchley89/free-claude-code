@@ -4,14 +4,14 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Protocol
 
-from free_claude_code.application.chat import ChatApplicationPort
+from free_claude_code.application.code_sessions import CodeApplicationPort
 from free_claude_code.application.connected_accounts import (
     ConnectedAccountLoginMode,
     ConnectedAccountStatus,
 )
 from free_claude_code.application.model_metadata import ProviderModelRefreshResult
 from free_claude_code.application.ports import RequestRuntimePort, TaskController
-from free_claude_code.config.admin.state import ConfigInputValue
+from free_claude_code.config.admin.state import ConfigInputValue, ValueState
 from free_claude_code.core.json_types import JsonObject
 
 
@@ -22,13 +22,17 @@ class AdminRuntimePort(Protocol):
         self, updates: Mapping[str, ConfigInputValue]
     ) -> JsonObject: ...
 
-    def admin_status(self) -> JsonObject: ...
+    async def admin_config(self) -> JsonObject: ...
+
+    async def admin_values(self) -> ValueState: ...
+
+    async def admin_status(self) -> JsonObject: ...
+
+    async def pick_folder(self, initial_path: str | None) -> str | None: ...
 
     async def test_provider(self, provider_id: str) -> JsonObject: ...
 
     async def refresh_models(self) -> ProviderModelRefreshResult: ...
-
-    async def request_restart(self) -> None: ...
 
     async def connected_account_status(
         self, provider_id: str
@@ -56,4 +60,4 @@ class ApiServices:
     requests: RequestRuntimePort
     admin: AdminRuntimePort
     tasks: TaskController
-    chat: ChatApplicationPort | None = None
+    code: CodeApplicationPort | None = None

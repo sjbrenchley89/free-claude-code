@@ -18,8 +18,13 @@ from free_claude_code.core.anthropic.stream_contracts import (
     text_content,
     thinking_content,
 )
+from free_claude_code.core.history_replay import decode_replay
 from free_claude_code.core.model_capabilities import ModelInputModality
-from free_claude_code.core.reasoning import ReasoningEffort, ReasoningPolicy
+from free_claude_code.core.reasoning import (
+    ReasoningCapability,
+    ReasoningEffort,
+    ReasoningPolicy,
+)
 from free_claude_code.providers.model_listing import ModelListResponseError
 from free_claude_code.providers.openai_chat import OpenAIChatProvider
 from tests.providers.support import (
@@ -340,14 +345,13 @@ async def test_stream_preserves_signed_details_without_duplicating_reasoning(
     events = parse_sse_text(event_text)
     assert thinking_content(events) == "plan "
     assert text_content(events) == "done"
-    redacted_blocks = [
-        event.data["content_block"]
+    records = [
+        decode_replay(event.data["delta"]["signature"]).native
         for event in events
-        if event.event == "content_block_start"
-        and event.data.get("content_block", {}).get("type") == "redacted_thinking"
+        if event.data.get("delta", {}).get("type") == "signature_delta"
     ]
-    assert len(redacted_blocks) == 1
-    assert json.loads(redacted_blocks[0]["data"]) == detail
+    assert len(records) == 1
+    assert records[0]["reasoning_details"] == [detail]
     assert stream.closed
 
 
@@ -403,6 +407,7 @@ async def test_model_catalog_filters_modalities_and_maps_reasoning_capability(
             ProviderModelInfo(
                 "plain-chat",
                 supports_thinking=False,
+                reasoning_capability=ReasoningCapability.NONE,
                 input_modalities=frozenset({ModelInputModality.TEXT}),
             ),
             ProviderModelInfo(

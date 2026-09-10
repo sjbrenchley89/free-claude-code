@@ -15,6 +15,8 @@ from .ids import (
     new_reasoning_item_id,
     new_response_id,
 )
+from .messages_request import ResponsesMessagesRequest, build_responses_messages_request
+from .messages_stream import AnthropicToResponsesStream
 from .models import OpenAIResponsesRequest
 from .native import NativeResponsesRelay, build_native_responses_request
 from .provider_input import build_responses_provider_request
@@ -34,10 +36,20 @@ from .streaming.error_mapping import replay_unsafe_function_call_error
 from .streaming.event_builders import ResponseEventBuilder
 from .streaming.ledger import ResponsesOutputLedger
 from .tokens import estimate_responses_input_tokens
-from .tools import responses_tool_identity_from_anthropic_name
+from .tool_adaptation import (
+    ResponsesToolAdapter,
+    ResponsesToolEventAdapter,
+    ResponsesToolPolicy,
+)
+from .tools import (
+    ResponsesToolIdentity,
+    flatten_responses_tool_name,
+    responses_tool_identity_from_wire_name,
+)
 
 __all__ = [
     "OPENAI_RESPONSES_SSE_HEADERS",
+    "AnthropicToResponsesStream",
     "NativeResponsesRelay",
     "OpenAIResponsesRequest",
     "ReasoningBlockState",
@@ -45,16 +57,23 @@ __all__ = [
     "ResponseEventBuilder",
     "ResponsesChatRequest",
     "ResponsesConversionError",
+    "ResponsesMessagesRequest",
     "ResponsesOutputLedger",
     "ResponsesProviderStream",
     "ResponsesStreamFailure",
+    "ResponsesToolAdapter",
+    "ResponsesToolEventAdapter",
+    "ResponsesToolIdentity",
+    "ResponsesToolPolicy",
     "TextBlockState",
     "ToolBlockState",
     "build_native_responses_request",
     "build_responses_chat_request",
+    "build_responses_messages_request",
     "build_responses_provider_request",
     "committed_response_failure_frame",
     "estimate_responses_input_tokens",
+    "flatten_responses_tool_name",
     "new_call_id",
     "new_message_item_id",
     "new_reasoning_item_id",
@@ -68,6 +87,6 @@ __all__ = [
     "responses_reasoning_config",
     "responses_reasoning_policy",
     "responses_stream_failure_from_event",
-    "responses_tool_identity_from_anthropic_name",
+    "responses_tool_identity_from_wire_name",
     "tool_item",
 ]

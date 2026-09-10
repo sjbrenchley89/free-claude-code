@@ -43,16 +43,14 @@ def _models() -> tuple[ClientModel, ...]:
 
 def test_hermes_config_pins_responses_catalog_and_fallbacks() -> None:
     managed = build_hermes_managed_config(
-        _models(),
+        (_models()[1], _models()[0], _models()[2]),
         proxy_root_url="http://127.0.0.1:9191/",
         nonce="a1b2c3",
-        selected_model="claude-3-freecc-no-thinking/open_router/plain-model",
     )
 
-    assert managed.provider_key == "fcc-a1b2c3"
     assert managed.provider_ref == "custom:fcc-a1b2c3"
     assert managed.key_env == "FCC_HERMES_A1B2C3"
-    assert managed.selected_model == (
+    assert managed.default_model == (
         "claude-3-freecc-no-thinking/open_router/plain-model"
     )
     assert managed.config["providers"] == {
@@ -79,6 +77,7 @@ def test_hermes_config_pins_responses_catalog_and_fallbacks() -> None:
         "base_url": "",
         "api_key": "",
         "api_mode": "codex_responses",
+        "default_headers": {"x-fcc-launch-id": "a1b2c3"},
     }
     assert managed.config["fallback_providers"] == []
     assert managed.config["fallback_model"] == []
@@ -147,8 +146,7 @@ def test_hermes_config_uses_first_model_by_default() -> None:
         nonce="ABC123",
     )
 
-    assert managed.selected_model == "nvidia_nim/vendor/model"
-    assert managed.provider_key == "fcc-abc123"
+    assert managed.default_model == "nvidia_nim/vendor/model"
     assert managed.key_env == "FCC_HERMES_ABC123"
 
 
@@ -158,16 +156,6 @@ def test_hermes_config_rejects_empty_catalog() -> None:
             (),
             proxy_root_url="http://127.0.0.1:9191",
             nonce="abc123",
-        )
-
-
-def test_hermes_config_rejects_unknown_model() -> None:
-    with pytest.raises(ValueError, match="not in the FCC catalog"):
-        build_hermes_managed_config(
-            _models(),
-            proxy_root_url="http://127.0.0.1:9191",
-            nonce="abc123",
-            selected_model="missing/model",
         )
 
 

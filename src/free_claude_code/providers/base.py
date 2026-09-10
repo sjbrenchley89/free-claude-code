@@ -1,7 +1,7 @@
 """Base provider interface - extend this to implement your own provider."""
 
 from abc import ABC, abstractmethod
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Mapping
 from dataclasses import dataclass
 
 from loguru import logger
@@ -50,6 +50,7 @@ class BaseProvider(ABC):
         request: MessagesRequest,
         *,
         reasoning: ReasoningPolicy = DEFAULT_REASONING_POLICY,
+        model_info: ProviderModelInfo | None = None,
     ) -> None:
         """Validate a Messages request before opening its SSE stream."""
 
@@ -122,6 +123,8 @@ class BaseProvider(ABC):
         request_id: str | None = None,
         response_model: str | None = None,
         reasoning: ReasoningPolicy = DEFAULT_REASONING_POLICY,
+        request_headers: Mapping[str, str] | None = None,
+        model_info: ProviderModelInfo | None = None,
     ) -> AsyncIterator[str]:
         """Stream response in Anthropic SSE format."""
 
@@ -134,5 +137,6 @@ class BaseProvider(ABC):
         request_id: str | None = None,
         response_model: str | None = None,
         reasoning: ReasoningPolicy = DEFAULT_REASONING_POLICY,
+        request_headers: Mapping[str, str] | None = None,
     ) -> AsyncIterator[str]:
         """Stream response in OpenAI Responses SSE format."""

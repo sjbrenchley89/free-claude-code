@@ -1,6 +1,6 @@
 """Typed capabilities consumed by application use cases."""
 
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator, Callable, Mapping
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -20,6 +20,7 @@ class ProviderPort(Protocol):
         request: MessagesRequest,
         *,
         reasoning: ReasoningPolicy,
+        model_info: ProviderModelInfo | None = None,
     ) -> None: ...
 
     def stream_messages(
@@ -30,6 +31,8 @@ class ProviderPort(Protocol):
         request_id: str,
         response_model: str,
         reasoning: ReasoningPolicy,
+        request_headers: Mapping[str, str] | None = None,
+        model_info: ProviderModelInfo | None = None,
     ) -> AsyncIterator[str]: ...
 
     def preflight_responses(
@@ -47,6 +50,7 @@ class ProviderPort(Protocol):
         request_id: str,
         response_model: str,
         reasoning: ReasoningPolicy,
+        request_headers: Mapping[str, str] | None = None,
     ) -> AsyncIterator[str]: ...
 
 
