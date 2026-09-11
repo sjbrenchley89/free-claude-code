@@ -25,6 +25,7 @@ from free_claude_code.core.json_types import JsonObject, JsonValue
 from free_claude_code.core.version import package_version
 
 from .admin_security import require_loopback_admin
+from .config_validation import validate_config
 from .dependencies import get_services
 from .ports import ApiServices
 
@@ -117,6 +118,23 @@ async def apply_admin_config(
     if isinstance(restart, dict) and restart.get("automatic"):
         background_tasks.add_task(services.admin.request_restart)
     return result
+
+
+@router.post("/admin/api/config/validate")
+async def validate_admin_config(
+    payload: AdminConfigPayload,
+    request: Request,
+):
+    """Validate configuration before applying.
+
+    Checks for:
+    - Missing required provider API keys
+    - Invalid URL formats
+    - Conflicting settings
+    """
+    require_loopback_admin(request)
+    validation_result = validate_config(payload.values)
+    return validation_result.to_dict()
 
 
 @router.get("/admin/api/status")
