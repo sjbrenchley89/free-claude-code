@@ -626,6 +626,52 @@ Windows PowerShell:
 & ([scriptblock]::Create((irm "https://raw.githubusercontent.com/Alishahryar1/free-claude-code/main/scripts/uninstall.ps1")))
 ```
 
+## Deploy to Production
+
+### Docker Deployment
+
+Deploy FCC locally in a container with Prometheus/Grafana monitoring:
+
+```bash
+./scripts/docker-deploy.sh setup      # Interactive setup wizard
+./scripts/docker-deploy.sh build      # Build Docker image
+./scripts/docker-deploy.sh start      # Start with docker-compose
+./scripts/docker-deploy.sh logs       # View logs
+./scripts/docker-deploy.sh stop       # Stop services
+```
+
+See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) for comprehensive Docker setup.
+
+### Cloud Deployment (Recommended)
+
+**Railway** (best for free-claude-code):
+- $5/month starter, free tier available
+- One-click deploy from GitHub
+- Deploy from iPhone/iPad browser
+
+**Render**:
+- $7/month, free tier for testing
+- Simple deployment flow
+- Better for high-traffic applications
+
+**Fly.io**:
+- Free tier available, global deployment
+- Requires CLI setup
+- Good for experienced developers
+
+**Vercel**:
+- Supports deployment with limitations
+- Better suited for admin dashboard only
+- 60-second timeout on serverless functions
+
+See [VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md) for comparison and step-by-step guides for all platforms.
+
+### Deploy from iPhone/iPad
+
+Full guide to deploy and manage entirely from mobile:
+
+See [DEPLOY_FROM_iOS.md](DEPLOY_FROM_iOS.md) for step-by-step instructions using Railway.
+
 ## Project Links
 
 - [Report bugs or request features](https://github.com/Alishahryar1/free-claude-code/issues)

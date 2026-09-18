@@ -1,0 +1,77 @@
+{
+  "name": "free-claude-code",
+  "description": "AI proxy server with multi-provider support - Deploy on Railway, Render, or Fly.io for best results",
+  "version": 2,
+  "framework": "python",
+  "buildCommand": "pip install -U uv && uv sync",
+  "startCommand": "uv run fcc-server",
+  "outputDirectory": "./",
+  "installCommand": "pip install -U uv",
+  "env": [
+    {
+      "key": "ANTHROPIC_API_KEY",
+      "description": "Your Anthropic API key from https://console.anthropic.com/account/keys",
+      "required": true
+    },
+    {
+      "key": "FCC_DEFAULT_MODEL",
+      "description": "Default AI model to use (e.g., anthropic/claude-3-5-sonnet-20241022)",
+      "default": "anthropic/claude-3-5-sonnet-20241022"
+    },
+    {
+      "key": "FCC_PORT",
+      "description": "Port to run the server on",
+      "default": "8082"
+    },
+    {
+      "key": "FCC_HOST",
+      "description": "Host to bind to (0.0.0.0 for external access)",
+      "default": "0.0.0.0"
+    },
+    {
+      "key": "FCC_LOG_LEVEL",
+      "description": "Logging level (DEBUG, INFO, WARNING, ERROR)",
+      "default": "INFO"
+    },
+    {
+      "key": "PROXY_AUTH_ENABLED",
+      "description": "Enable authentication on proxy endpoints (true/false)",
+      "default": "false"
+    },
+    {
+      "key": "ANTHROPIC_AUTH_TOKEN",
+      "description": "Authentication token for proxy (required if PROXY_AUTH_ENABLED=true)",
+      "required": false
+    },
+    {
+      "key": "GROQ_API_KEY",
+      "description": "Optional: Groq API key for using Groq models",
+      "required": false
+    },
+    {
+      "key": "OPENROUTER_API_KEY",
+      "description": "Optional: OpenRouter API key for multiple models",
+      "required": false
+    },
+    {
+      "key": "DEEPSEEK_API_KEY",
+      "description": "Optional: DeepSeek API key",
+      "required": false
+    },
+    {
+      "key": "OPENAI_API_KEY",
+      "description": "Optional: OpenAI API key",
+      "required": false
+    },
+    {
+      "key": "AZURE_OPENAI_API_KEY",
+      "description": "Optional: Azure OpenAI API key",
+      "required": false
+    },
+    {
+      "key": "AZURE_OPENAI_BASE_URL",
+      "description": "Optional: Azure OpenAI base URL",
+      "required": false
+    }
+  ]
+}
