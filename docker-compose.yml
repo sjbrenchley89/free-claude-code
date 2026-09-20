@@ -1,0 +1,29 @@
+services:
+  fcc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: free-claude-code:local
+    container_name: free-claude-code
+    restart: unless-stopped
+    ports:
+      - "${FCC_PUBLISH_HOST:-127.0.0.1}:${PORT:-8082}:8082"
+    env_file:
+      - .env
+    environment:
+      # The proxy runs headless in a container; never try to open a browser.
+      FCC_OPEN_BROWSER: "false"
+      HOST: "0.0.0.0"
+      PORT: "8082"
+    volumes:
+      # Persist managed config, provider auth, logs, and messaging state.
+      - fcc-config:/home/app/.fcc
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8082/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+volumes:
+  fcc-config:

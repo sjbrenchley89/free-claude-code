@@ -15,7 +15,7 @@
 [![Code style: Ruff](https://img.shields.io/badge/code%20formatting-ruff-f5a623.svg?style=for-the-badge)](https://github.com/astral-sh/ruff)
 [![Logging: Loguru](https://img.shields.io/badge/logging-loguru-4ecdc4.svg?style=for-the-badge)](https://github.com/Delgan/loguru)
 
-[Quick Start](#quick-start) · [Providers](#choose-a-provider) · [Clients](#connect-your-client) · [Integrations](#optional-integrations) · [Manage](#manage-your-installation)
+[Quick Start](#quick-start) · [Providers](#choose-a-provider) · [Docker](#run-in-docker) · [Clients](#connect-your-client) · [Integrations](#optional-integrations) · [Manage](#manage-your-installation)
 
 </div>
 
@@ -350,6 +350,44 @@ Open **Admin UI → Model Config → Reasoning** and select the behavior you wan
 Providers that do not support a selected control retain their own behavior.
 
 </details>
+
+<a id="run-in-docker"></a>
+
+## Run In Docker
+
+Run the proxy as a container instead of a local install. Requires Docker
+with the Compose plugin.
+
+```bash
+git clone https://github.com/Alishahryar1/free-claude-code.git
+cd free-claude-code
+
+# Write ./.env: pick a provider, paste its API key, choose a model.
+./scripts/docker-deploy.sh setup
+
+# Build the image and start the stack in the background.
+./scripts/docker-deploy.sh build
+./scripts/docker-deploy.sh start
+
+# Probe the running server.
+./scripts/docker-deploy.sh test
+
+# Follow logs.
+./scripts/docker-deploy.sh logs
+```
+
+`start` waits for `GET /health` and prints the local URL (default
+`http://localhost:8082`). Point your coding agent at that URL as an
+Anthropic base URL, using the `ANTHROPIC_AUTH_TOKEN` from `.env` when
+you enabled proxy auth during `setup`.
+
+Other subcommands: `stop`, `restart`, `status`, and `down` (removes the
+container, keeps the `fcc-config` volume with managed config, provider
+auth, and logs). Re-run `setup --force` to rewrite `.env`.
+
+The published port binds to `127.0.0.1` by default. Set
+`FCC_PUBLISH_HOST=0.0.0.0` in the environment before `start` to expose
+it on the network.
 
 <a id="connect-your-client"></a>
 

@@ -1,1 +1,9 @@
 src/free_claude_code/core/data/cl100k_base.tiktoken -text linguist-vendored=true
+
+# Shell scripts and container build files must stay LF so they run on
+# Linux/macOS and inside Docker regardless of the committer's platform.
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.dockerfile text eol=lf
+docker-compose.yml text eol=lf
+.dockerignore text eol=lf

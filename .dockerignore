@@ -1,0 +1,38 @@
+# Version control and CI
+.git
+.github
+.gitignore
+
+# Local virtualenvs and caches
+.venv
+venv
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.ruff_cache
+.ty_cache
+htmlcov
+.coverage
+.coverage.*
+
+# Secrets and local config
+.env
+.env.*
+!.env.example
+
+# Tests and tooling not needed in the image
+tests
+e2e
+smoke
+scripts
+docs
+assets
+*.md
+!README.md
+
+# Editor and agent scratch
+.claude
+.claude-flow
+.roo
+Microsoft
+_launch_claude.cmd
