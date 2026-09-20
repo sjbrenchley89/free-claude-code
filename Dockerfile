@@ -13,7 +13,7 @@ WORKDIR /app
 
 # Install uv package manager
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    export PATH="/root/.cargo/bin:$PATH" && \
+    export PATH="/root/.local/bin:$PATH" && \
     uv --version
 
 # Copy project files
@@ -22,7 +22,7 @@ COPY src ./src
 COPY scripts ./scripts
 
 # Install dependencies with uv
-ENV PATH="/root/.cargo/bin:$PATH"
+ENV PATH="/root/.local/bin:$PATH"
 RUN uv sync --frozen
 
 # Create config directory
