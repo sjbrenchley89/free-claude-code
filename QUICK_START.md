@@ -1,142 +1,162 @@
-# Quick Start Guide
+# Setup And Usage Guide
 
-Get Free Claude Code running in 5 minutes.
+This guide gets Free Claude Code (FCC) running and connects a coding agent to
+your configured models.
 
-## One-Command Start (Docker Compose)
+## Choose An Install Method
+
+### Recommended: installer
+
+On macOS or Linux:
 
 ```bash
-git clone https://github.com/sjbrenchley89/free-claude-code.git
+curl -fsSL "https://raw.githubusercontent.com/Alishahryar1/free-claude-code/main/scripts/install.sh" | sh
+```
+
+On Windows PowerShell:
+
+```powershell
+& ([scriptblock]::Create((irm "https://raw.githubusercontent.com/Alishahryar1/free-claude-code/main/scripts/install.ps1")))
+```
+
+Choose at least one coding agent during installation. Run the same command
+again later to update FCC.
+
+### From source with uv
+
+Requirements: Python 3.14 and uv 0.11.16 or newer.
+
+```bash
+git clone https://github.com/Alishahryar1/free-claude-code.git
 cd free-claude-code
-cp .env.example .env
-docker-compose up -d
+uv sync
+uv run fcc-server
 ```
 
-Then open **http://localhost:8000** in your browser.
+### Docker Compose
 
----
-
-## Common Commands
-
-### Start Services
 ```bash
-docker-compose up -d
+git clone https://github.com/Alishahryar1/free-claude-code.git
+cd free-claude-code
+cp .env.example .env.production
+docker compose up -d fcc-server
 ```
 
-### Stop Services
+Docker Compose serves FCC on `http://localhost:8082`. The Prometheus and
+Grafana services are optional:
+
 ```bash
-docker-compose down
+docker compose up -d prometheus grafana
 ```
 
-### View Status
+## Configure A Provider
+
+1. Open the Admin UI at `http://localhost:8082` for Docker, or use the URL
+  printed by `fcc-server`.
+2. Open **Providers** and choose a provider.
+3. Add the provider API key or local endpoint. Never commit keys to git.
+4. Choose a model in **Model Config**, or enter a model as
+  `provider/model-id`.
+5. Optionally add ordered **Fallback Models**.
+6. Click **Apply**, then use **Check** to verify the provider.
+
+The provider catalog and key links are in [README.md](./README.md#choose-a-provider).
+For Docker, edit `.env.production` and restart the service when changing
+environment variables:
+
 ```bash
-docker-compose ps
+docker compose restart fcc-server
 ```
 
-### View Logs
+The example configuration is in [.env.example](./.env.example). Only the
+variables required by your selected provider need to be set. The default
+model is NVIDIA NIM, so configure `NVIDIA_NIM_API_KEY` or select another
+provider before starting a request.
+
+## Start And Use FCC
+
+With the installer or a source install, start the server first:
+
 ```bash
-docker-compose logs -f fcc-server
+fcc-server
 ```
 
-### Restart Service
+Keep that terminal open on Linux. Then launch one of the installed clients in
+another terminal:
+
 ```bash
-docker-compose restart fcc-server
+fcc-claude
+fcc-codex
+fcc-pi
+fcc-opencode
+fcc-cline
+fcc-hermes
+fcc-dsh
+fcc-grok
+fcc-muse
+fcc-aider
 ```
 
-### Execute Command in Container
+Run the command from the project directory you want the agent to work in.
+The launchers configure the selected client to use FCC and preserve the
+client's normal tools and workflow.
+
+## Docker Operations
+
 ```bash
-docker-compose exec fcc-server python -c "print('hello')"
+docker compose ps
+docker compose logs -f fcc-server
+curl http://localhost:8082/health
+docker compose restart fcc-server
+docker compose down
 ```
 
-### Check Health
+To rebuild after changing source or the Dockerfile:
+
 ```bash
-curl http://localhost:8000/health
+docker compose build fcc-server
+docker compose up -d fcc-server
 ```
-
----
-
-## Configuration
-
-### Edit Environment Variables
-```bash
-nano .env
-docker-compose restart  # Apply changes
-```
-
-### Key Variables
-```
-ANTHROPIC_API_KEY=sk-...          # For Anthropic
-OPENAI_API_KEY=sk-...              # For OpenAI
-OPENROUTER_API_KEY=sk-...          # For OpenRouter
-NVIDIA_NIM_API_KEY=...             # For NVIDIA NIM
-LOG_LEVEL=info                     # Logging level
-```
-
----
 
 ## Troubleshooting
 
-### Container won't start
-```bash
-docker-compose logs
-docker-compose down
-docker-compose pull
-docker-compose up -d
-```
+### Admin UI does not open
 
-### Can't connect to port 8000
-```bash
-lsof -i :8000  # Check what's using port 8000
-```
-
-### Clear everything and restart
-```bash
-docker-compose down -v           # Remove volumes
-docker system prune -a --volumes # Clean up everything
-docker-compose up -d
-```
-
----
-
-## Using Pre-Built Images
-
-Instead of building locally, pull from GitHub Container Registry:
+Check the server output or Docker logs for the actual port:
 
 ```bash
-docker run -d \
-  -p 8000:8000 \
-  --env-file .env \
-  --restart unless-stopped \
-  ghcr.io/sjbrenchley89/free-claude-code:latest
+docker compose logs fcc-server
+curl http://localhost:8082/health
 ```
 
----
+### Provider check fails
 
-## Automated Installation (One Script)
+Confirm that the key is valid, the provider prefix matches the selected
+model, and the model ID is supported by that provider. For local providers,
+start the local server first and verify its base URL in Admin.
 
-### Linux/macOS
+### A coding agent command is missing
+
+Run the installer again and select that agent, or install the project entry
+points from source with `uv sync`. Check the installed commands with:
+
 ```bash
-bash scripts/deploy.sh
+command -v fcc-server fcc-claude fcc-codex
 ```
 
-### Windows PowerShell
-```powershell
-.\scripts\deploy.ps1
+### Reset Docker state
+
+This removes FCC containers and their named monitoring volumes:
+
+```bash
+docker compose down -v
+docker compose up -d fcc-server
 ```
 
----
+## More Documentation
 
-## Full Guides
-
-- **Docker Deployment**: See [DOCKER_DEPLOYMENT_GUIDE.md](./DOCKER_DEPLOYMENT_GUIDE.md)
-- **Advanced Setup**: See [DEPLOYMENT.md](./DEPLOYMENT.md)
-- **Validation**: See [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md)
-
----
-
-## Need Help?
-
-1. Check logs: `docker-compose logs`
-2. Verify health: `curl http://localhost:8000/health`
-3. Check environment: Edit `.env` and verify API keys
-4. Restart: `docker-compose down && docker-compose up -d`
+- [Main README and provider catalog](./README.md)
+- [Docker deployment guide](./DOCKER_DEPLOYMENT_GUIDE.md)
+- [Environment variable reference](./ENVIRONMENT_SETUP.md)
+- [Deployment guide](./DEPLOYMENT.md)
 
