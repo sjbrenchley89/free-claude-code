@@ -74,7 +74,7 @@ class Driver:
                 urllib.request.urlopen(url, timeout=1)
                 print(f"server healthy on port {port}")
                 return
-            except (urllib.error.URLError, ConnectionError):
+            except urllib.error.URLError, ConnectionError:
                 time.sleep(0.3)
         raise TimeoutError("fcc-server did not become healthy within 30s")
 
@@ -97,7 +97,9 @@ class Driver:
     def open(self, url: str | None) -> None:
         if url is None:
             if self.server_port is None:
-                raise ValueError("no server running; pass an explicit url or start-server first")
+                raise ValueError(
+                    "no server running; pass an explicit url or start-server first"
+                )
             url = f"http://127.0.0.1:{self.server_port}/admin"
         if self.playwright is None:
             self.playwright = sync_playwright().start()
@@ -105,16 +107,20 @@ class Driver:
             self.page = self.browser.new_page(viewport={"width": 1280, "height": 900})
             self.page.on(
                 "console",
-                lambda msg: self.console_errors.append(msg.text)
-                if msg.type == "error"
-                else None,
+                lambda msg: (
+                    self.console_errors.append(msg.text)
+                    if msg.type == "error"
+                    else None
+                ),
             )
         self.page.goto(url, wait_until="networkidle")
         print(f"opened {url} -- title: {self.page.title()}")
 
     def nav(self, view: str) -> None:
         if view not in NAV_VIEWS:
-            raise ValueError(f"unknown view {view!r}; expected one of {sorted(NAV_VIEWS)}")
+            raise ValueError(
+                f"unknown view {view!r}; expected one of {sorted(NAV_VIEWS)}"
+            )
         self.page.click(f'button[data-view="{view}"]')
         self.page.wait_for_timeout(300)
         print(f"navigated to {view}")
@@ -203,7 +209,7 @@ def main() -> None:
                 return
             else:
                 print(f"unknown command: {cmd}")
-        except Exception as exc:  # noqa: BLE001 - REPL: report and keep going
+        except Exception as exc:
             print(f"error running {line!r}: {exc}")
     driver.quit()
 
