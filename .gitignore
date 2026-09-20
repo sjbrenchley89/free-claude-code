@@ -1,5 +1,8 @@
 __pycache__
-.claude
+.claude/*
+!.claude/skills/
+!.claude/skills/**
+.claude/skills/*/screenshots/
 .cursor
 .pytest_cache
 .ruff_cache
