@@ -2277,7 +2277,7 @@ def test_install_ps1_fresh_install_is_verified(
             "uv:tool install --force --refresh-package free-claude-code "
             "--python cpython-3.14.0-windows-x86_64-none "
             '"free-claude-code @ '
-            'https://github.com/Alishahryar1/free-claude-code/archive/refs/heads/main.zip"'
+            'https://github.com/sjbrenchley89/free-claude-code/archive/refs/heads/main.zip"'
         )
         for call in calls
     )
@@ -3093,7 +3093,7 @@ def test_install_ps1_voice_flags_only_change_fcc_spec(
     assert result.returncode == 0, result.stderr
     assert any(
         '--torch-backend cu130 "free-claude-code[voice,voice_local] @ '
-        'https://github.com/Alishahryar1/free-claude-code/archive/refs/heads/main.zip"'
+        'https://github.com/sjbrenchley89/free-claude-code/archive/refs/heads/main.zip"'
         in call
         for call in powershell_harness.calls()
     )
