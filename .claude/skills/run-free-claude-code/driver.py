@@ -104,11 +104,13 @@ class Driver:
             url = f"http://127.0.0.1:{self.server_port}/admin"
         if self.playwright is None:
             self.playwright = sync_playwright().start()
-            launch_kwargs: dict[str, str] = {}
             pinned_chromium = "/opt/pw-browsers/chromium"
             if os.path.exists(pinned_chromium):
-                launch_kwargs["executable_path"] = pinned_chromium
-            self.browser = self.playwright.chromium.launch(**launch_kwargs)
+                self.browser = self.playwright.chromium.launch(
+                    executable_path=pinned_chromium
+                )
+            else:
+                self.browser = self.playwright.chromium.launch()
             self.page = self.browser.new_page(viewport={"width": 1280, "height": 900})
             self.page.on(
                 "console",
