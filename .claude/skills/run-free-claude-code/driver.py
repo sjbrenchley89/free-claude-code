@@ -11,6 +11,7 @@ Run under ``uv run`` so the project's own Playwright + Chromium install is
 used (``uv run playwright install chromium`` once, if not already done).
 """
 
+import os
 import shlex
 import subprocess
 import sys
@@ -103,7 +104,11 @@ class Driver:
             url = f"http://127.0.0.1:{self.server_port}/admin"
         if self.playwright is None:
             self.playwright = sync_playwright().start()
-            self.browser = self.playwright.chromium.launch()
+            launch_kwargs: dict[str, str] = {}
+            pinned_chromium = "/opt/pw-browsers/chromium"
+            if os.path.exists(pinned_chromium):
+                launch_kwargs["executable_path"] = pinned_chromium
+            self.browser = self.playwright.chromium.launch(**launch_kwargs)
             self.page = self.browser.new_page(viewport={"width": 1280, "height": 900})
             self.page.on(
                 "console",
