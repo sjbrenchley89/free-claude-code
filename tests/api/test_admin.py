@@ -1,4 +1,3 @@
-import asyncio
 import mimetypes
 from dataclasses import replace
 from pathlib import Path
@@ -660,7 +659,6 @@ def test_admin_static_model_combobox_owns_dropdown_and_search_behavior():
     assert 'this.toggle.className = "model-combobox-toggle"' in combobox_script
     assert "class FccModelCombobox" in combobox_script
     assert 'input.addEventListener("click", () => this.open())' in combobox_script
-    assert "value.toLocaleLowerCase().includes(normalizedQuery)" in combobox_script
     assert 'event.key === "ArrowDown" || event.key === "ArrowUp"' in combobox_script
     assert "this.setActive(this.visibleOptions.length - 1)" in combobox_script
     assert 'event.key === "Enter"' in combobox_script
@@ -847,7 +845,9 @@ def test_admin_models_include_configured_and_cached_canonical_slugs():
     response = _local_client(app).get("/admin/api/models")
 
     assert response.status_code == 200
-    assert response.json() == {
+    assert {
+        key: value for key, value in response.json().items() if key != "model_labels"
+    } == {
         "models": [
             "nvidia_nim/configured-model",
             "open_router/anthropic/configured-opus",
@@ -876,7 +876,9 @@ def test_admin_model_refresh_returns_the_updated_canonical_catalog():
     response = _local_client(app).post("/admin/api/models/refresh")
 
     assert response.status_code == 200
-    assert response.json() == {
+    assert {
+        key: value for key, value in response.json().items() if key != "model_labels"
+    } == {
         "models": ["deepseek/deepseek-chat", "deepseek/deepseek-reasoner"],
         "failed_providers": [],
     }
@@ -898,7 +900,9 @@ def test_admin_model_refresh_reports_partial_provider_failures():
     response = _local_client(app).post("/admin/api/models/refresh")
 
     assert response.status_code == 200
-    assert response.json() == {
+    assert {
+        key: value for key, value in response.json().items() if key != "model_labels"
+    } == {
         "models": ["deepseek/deepseek-chat"],
         "failed_providers": ["open_router"],
     }
@@ -2211,7 +2215,10 @@ def test_admin_apply_preserves_false_and_numeric_zero(monkeypatch, tmp_path):
     assert "HTTP_WRITE_TIMEOUT=0" in managed
 
 
-def test_admin_local_provider_status_reports_reachable(monkeypatch, tmp_path):
+@pytest.mark.parametrize("provider_id", ["lmstudio", "llamacpp", "ollama"])
+def test_admin_local_provider_status_reports_reachable(
+    monkeypatch, tmp_path, provider_id
+):
     _set_home(monkeypatch, tmp_path)
     _clear_process_config(monkeypatch)
     app = create_test_app()
@@ -2230,24 +2237,24 @@ def test_admin_local_provider_status_reports_reachable(monkeypatch, tmp_path):
             return httpx.Response(200, json={"data": []})
 
     with patch("free_claude_code.api.admin_routes.httpx.AsyncClient", FakeAsyncClient):
-        response = _local_client(app).get("/admin/api/providers/local-status")
+        response = _local_client(app).get(
+            f"/admin/api/providers/{provider_id}/local-status"
+        )
 
     assert response.status_code == 200
-    providers = response.json()["providers"]
-    assert {provider["status"] for provider in providers} == {"reachable"}
+    assert response.json()["provider_id"] == provider_id
+    assert response.json()["status"] == "reachable"
 
 
-def test_admin_local_provider_status_checks_all_providers_concurrently(
+def test_admin_local_provider_status_checks_only_requested_provider(
     monkeypatch, tmp_path
 ):
     _set_home(monkeypatch, tmp_path)
     _clear_process_config(monkeypatch)
     app = create_test_app()
     calls = 0
-    active = 0
-    max_active = 0
 
-    class SlowAsyncClient:
+    class CountingAsyncClient:
         def __init__(self, *args, **kwargs):
             pass
 
@@ -2258,20 +2265,17 @@ def test_admin_local_provider_status_checks_all_providers_concurrently(
             return None
 
         async def get(self, url: str):
-            nonlocal active, calls, max_active
+            nonlocal calls
             calls += 1
-            active += 1
-            max_active = max(max_active, active)
-            await asyncio.sleep(0.01)
-            active -= 1
             return httpx.Response(200, json={"data": []})
 
-    with patch("free_claude_code.api.admin_routes.httpx.AsyncClient", SlowAsyncClient):
-        response = _local_client(app).get("/admin/api/providers/local-status")
+    with patch(
+        "free_claude_code.api.admin_routes.httpx.AsyncClient", CountingAsyncClient
+    ):
+        response = _local_client(app).get("/admin/api/providers/lmstudio/local-status")
 
     assert response.status_code == 200
-    assert calls == 3
-    assert max_active == 3
+    assert calls == 1
 
 
 def test_admin_config_exposes_structured_provider_configuration_targets(
@@ -2319,18 +2323,17 @@ def test_admin_local_provider_failure_does_not_return_exception_text(
         "free_claude_code.api.admin_routes.httpx.AsyncClient",
         return_value=FailingAsyncClient(),
     ):
-        response = _local_client(app).get("/admin/api/providers/local-status")
+        response = _local_client(app).get("/admin/api/providers/lmstudio/local-status")
 
     assert response.status_code == 200
-    providers = response.json()["providers"]
-    assert {provider["status"] for provider in providers} == {"offline"}
-    for provider in providers:
-        assert provider["message"] == (
-            "Could not connect. Verify the URL and that the local provider is running."
-        )
-        assert "CREDENTIAL[unrecognized-format-987654321]" not in provider["message"]
-        assert "RuntimeError" not in provider["message"]
-        assert "error_type" not in provider
+    provider = response.json()
+    assert provider["status"] == "offline"
+    assert provider["message"] == (
+        "Could not connect. Verify the URL and that the local provider is running."
+    )
+    assert "CREDENTIAL[unrecognized-format-987654321]" not in provider["message"]
+    assert "RuntimeError" not in provider["message"]
+    assert "error_type" not in provider
 
 
 @pytest.mark.parametrize(

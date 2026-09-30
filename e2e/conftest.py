@@ -13,6 +13,7 @@ import uvicorn
 from playwright.sync_api import Page
 
 from e2e.code_support import CodeControl
+from e2e.server_shutdown import join_server
 from free_claude_code.api.app import create_app
 from free_claude_code.api.ports import ApiServices
 from free_claude_code.application.model_metadata import ProviderModelInfo
@@ -32,6 +33,7 @@ from free_claude_code.harnesses import (
     claude_integration,
     codex_integration,
     jetbrains_acp_integration,
+    vscode_chat_integration,
 )
 from free_claude_code.providers.base import BaseProvider, ProviderConfig
 from free_claude_code.providers.runtime import ProviderRuntime
@@ -54,9 +56,6 @@ class _ModelListingProvider(BaseProvider):
             ProviderConfig(
                 api_key="browser-test",
                 base_url="https://provider.invalid/v1",
-                rate_limit=1_000,
-                rate_window=1,
-                max_concurrency=100,
                 http_read_timeout=1.0,
                 http_write_timeout=1.0,
                 http_connect_timeout=1.0,
@@ -116,6 +115,7 @@ class _ModelListingProvider(BaseProvider):
         response_model: str | None = None,
         reasoning: ReasoningPolicy = DEFAULT_REASONING_POLICY,
         request_headers: Mapping[str, str] | None = None,
+        model_info: ProviderModelInfo | None = None,
     ) -> AsyncIterator[str]:
         if False:
             yield ""
@@ -184,6 +184,11 @@ def admin_base_url(
         codex_integration, "config_path", lambda: tmp_path / ".codex" / "config.toml"
     )
     monkeypatch.setattr(
+        vscode_chat_integration,
+        "config_path",
+        lambda: tmp_path / "vscode/chatLanguageModels.json",
+    )
+    monkeypatch.setattr(
         claude_integration, "claude_state_path", lambda: tmp_path / ".claude.json"
     )
     monkeypatch.setattr(
@@ -244,15 +249,20 @@ def admin_base_url(
         ),
     }
 
-    async def fixture_provider(provider_id: str, _settings: Settings) -> BaseProvider:
+    async def fixture_provider(
+        provider_id: str, _settings: Settings, _admission_registry
+    ) -> BaseProvider:
         if provider_id not in providers:
             raise AssertionError(f"Missing browser fixture provider: {provider_id}")
         return providers[provider_id]
 
     manager = ProviderRuntimeManager(
         get_settings(),
-        runtime_factory=lambda snapshot: ProviderRuntime(
-            snapshot, dict(providers), provider_constructor=fixture_provider
+        runtime_factory=lambda snapshot, admission_registry: ProviderRuntime(
+            snapshot,
+            admission_registry,
+            dict(providers),
+            provider_constructor=fixture_provider,
         ),
     )
     runtime = ApplicationRuntime(
@@ -260,6 +270,7 @@ def admin_base_url(
         configuration=ConfigurationService(ManagedConfigStore()),
         transcriber=None,
         code_service=code_control.service,
+        database=code_control.database,
     )
     monkeypatch.setattr(
         NativeFolderPicker,
@@ -344,11 +355,9 @@ def admin_base_url(
         yield f"http://127.0.0.1:{port}"
     finally:
         server.should_exit = True
-        thread.join(timeout=5.0)
+        join_server(thread, code_control, request)
         listener.close()
         clear_settings_cache()
-        if thread.is_alive():
-            pytest.fail("Admin browser-test server did not stop")
 
 
 @pytest.fixture(autouse=True)

@@ -62,6 +62,7 @@ CASES = [
     ),
     ("nararoute", "https://router.bynara.id/v1/models", {"data": []}, 401),
     ("experiential", "https://api.experientiallabs.ai/v1/models", {"data": []}, 401),
+    ("orcarouter", "https://api.orcarouter.ai/v1/models", {"data": []}, 401),
     (
         "deepinfra",
         "https://api.deepinfra.com/v1/me",
@@ -79,6 +80,12 @@ CASES = [
     ),
     ("cerebras", "https://api.cerebras.ai/v1/models", {"data": []}, None),
     ("sambanova", "https://api.sambanova.ai/v1/models", {"data": []}, None),
+    (
+        "cheaperinference",
+        "https://api.cheaperinference.com/v1/models",
+        {"data": []},
+        None,
+    ),
     (
         "fireworks",
         "https://api.fireworks.ai/v1/accounts?pageSize=1",
