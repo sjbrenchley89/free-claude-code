@@ -18,7 +18,12 @@ def integration(tmp_path, monkeypatch):
         claude_integration, "claude_state_path", lambda: tmp_path / ".claude.json"
     )
     app = create_test_app(
-        Settings(host="0.0.0.0", port=4321, proxy_auth_token="integration-secret")
+        Settings(
+            host="0.0.0.0",
+            port=4321,
+            proxy_auth_enabled=True,
+            proxy_auth_token="integration-secret",
+        )
     )
     with TestClient(
         app, base_url="http://127.0.0.1", client=("127.0.0.1", 50000)
