@@ -1,0 +1,9 @@
+{
+  "buildCommand": "uv sync --locked --no-dev",
+  "startCommand": ".venv/bin/python -m free_claude_code.cli.cloud",
+  "healthcheckPath": "/health",
+  "healthcheckTimeout": 120,
+  "restartPolicyType": "ON_FAILURE",
+  "restartPolicyMaxRetries": 3,
+  "sleepApplication": false
+}

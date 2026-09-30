@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.railpack.com",
   "deploy": {
-    "startCommand": "uv run fcc-server"
+    "startCommand": ".venv/bin/python -m free_claude_code.cli.cloud"
   }
 }
