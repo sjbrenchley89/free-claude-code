@@ -128,7 +128,12 @@ def test_supported_uv_minimum_is_consistent() -> None:
     install_sh = Path("scripts/install.sh").read_text(encoding="utf-8")
     install_ps1 = Path("scripts/install.ps1").read_text(encoding="utf-8")
 
-    assert pyproject["tool"]["uv"]["required-version"] == f">={UV_MINIMUM}"
+    # pyproject may keep a looser floor than the installer/CI version so platform-provided
+    # uv runtimes (e.g. Vercel) can still resolve the project; it must never be higher.
+    required = pyproject["tool"]["uv"]["required-version"]
+    assert required.startswith(">="), required
+    floor = tuple(int(part) for part in required.removeprefix(">=").split("."))
+    assert floor <= tuple(int(part) for part in UV_MINIMUM.split("."))
     assert f'MIN_UV_VERSION="{UV_MINIMUM}"' in install_sh
     assert f'$MinUvVersion = "{UV_MINIMUM}"' in install_ps1
     for workflow_path in UV_WORKFLOWS:
