@@ -117,6 +117,7 @@ def test_direct_settings_still_reject_retired_provider():
 def test_settings_defaults_are_valid_and_nonempty() -> None:
     settings = Settings()
 
+    assert settings.host == "127.0.0.1"
     assert settings.provider_rate_limit == 1
     assert settings.provider_rate_window == 2
     assert settings.provider_max_concurrency == 2

@@ -264,6 +264,11 @@ _NON_PROVIDER_FIELDS: tuple[ConfigFieldSpec, ...] = (
         "runtime",
         settings_attr="host",
         restart_required=True,
+        description=(
+            "Defaults to 127.0.0.1 for local access. Use 0.0.0.0 or :: for "
+            "network access with API authentication enabled and a custom token. "
+            "Specific LAN addresses are unsupported because Admin requires loopback."
+        ),
     ),
     ConfigFieldSpec(
         "PORT",

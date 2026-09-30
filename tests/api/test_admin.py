@@ -2,7 +2,7 @@ import asyncio
 import mimetypes
 from dataclasses import replace
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest
@@ -1123,6 +1123,59 @@ def test_admin_apply_rejects_bad_model_shape(monkeypatch, tmp_path):
     assert body["applied"] is False
     assert body["valid"] is False
     assert any("provider type" in error for error in body["errors"])
+
+
+@pytest.mark.parametrize(
+    "values",
+    [
+        {"HOST": "0.0.0.0"},
+        {"HOST": "::", "PROXY_AUTH_ENABLED": "true"},
+        {"HOST": "192.168.1.10"},
+    ],
+)
+def test_admin_rejects_unsafe_bind_without_changing_saved_config(
+    monkeypatch, tmp_path, values
+):
+    _set_home(monkeypatch, tmp_path)
+    _clear_process_config(monkeypatch)
+    client = _local_client(create_test_app())
+    assert client.get("/admin/api/config").status_code == 200
+    env_file = tmp_path / ".fcc" / ".env"
+    baseline = env_file.read_bytes()
+
+    response = client.post("/admin/api/config/apply", json={"values": values})
+
+    assert response.status_code == 200
+    assert response.json()["applied"] is False
+    assert response.json()["valid"] is False
+    assert env_file.read_bytes() == baseline
+
+
+@pytest.mark.parametrize("host", ["0.0.0.0", "::"])
+def test_admin_applies_authenticated_network_bind_together(monkeypatch, tmp_path, host):
+    _set_home(monkeypatch, tmp_path)
+    _clear_process_config(monkeypatch)
+    restart = MagicMock(return_value=None)
+    client = _local_client(create_test_app(restart_callback=restart))
+    response = client.post(
+        "/admin/api/config/apply",
+        json={
+            "values": {
+                "HOST": host,
+                "PROXY_AUTH_ENABLED": "true",
+                "ANTHROPIC_AUTH_TOKEN": "custom-token",
+            }
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["applied"] is True
+    assert body["restart"]["required"] is True
+    expected_host = "127.0.0.1" if host == "0.0.0.0" else "[::1]"
+    assert body["restart"]["admin_url"] == f"http://{expected_host}:8082/admin"
+    restart.assert_called_once_with()
+    assert client.get("/admin/api/config").status_code == 200
 
 
 def test_admin_apply_rejects_duplicate_model_fallbacks(monkeypatch, tmp_path):

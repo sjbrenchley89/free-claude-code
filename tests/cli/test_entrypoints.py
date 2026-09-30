@@ -21,7 +21,7 @@ def _launcher_settings(
     open_admin_browser: bool = True,
 ) -> Settings:
     return Settings(
-        host="0.0.0.0",
+        host="127.0.0.1",
         port=port,
         proxy_auth_enabled=False,
         proxy_auth_token=token,

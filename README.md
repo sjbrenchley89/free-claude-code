@@ -98,8 +98,20 @@ terminal open.
 4. Leave `MODEL` on the default `nvidia_nim/nvidia/nemotron-3-super-120b-a12b`, or search the model dropdown and select another model.
 5. Click **Apply**.
 
-To protect the local proxy with a bearer token, enable **Proxy Authentication**
+To protect the local proxy with a bearer token, enable **Require API Authentication**
 in Admin.
+
+The server defaults to `HOST=127.0.0.1` and `PORT=8082`. For network access,
+set a strong, unique **API/CLI Auth Token**, enable **Require API Authentication**,
+and set **Server Host** to `0.0.0.0` (IPv4) or `::` (IPv6), then apply together.
+Wildcard binds require authentication and reject the default `freecc` token.
+Admin remains available locally at `http://127.0.0.1:8082/admin` for IPv4 or
+`http://[::1]:8082/admin` for IPv6. Specific LAN bind addresses are unsupported
+because Admin requires a loopback connection.
+
+Existing configurations with a wildcard host and authentication disabled will
+need `HOST=127.0.0.1` in `~/.fcc/.env` before starting, or
+`PROXY_AUTH_ENABLED=true` with a custom `ANTHROPIC_AUTH_TOKEN` in that file.
 
 <div align="center">
   <img src="assets/admin-page.png" alt="Free Claude Code Admin UI" width="700">

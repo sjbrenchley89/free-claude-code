@@ -1,5 +1,6 @@
 """Pure, validated application settings schema."""
 
+from ipaddress import ip_address
 from typing import Annotated
 
 from pydantic import (
@@ -695,7 +696,7 @@ class Settings(BaseModel):
     )
 
     # ==================== Server ====================
-    host: NonEmptyString = Field(default="0.0.0.0", validation_alias="HOST")
+    host: NonEmptyString = Field(default="127.0.0.1", validation_alias="HOST")
     port: int = Field(default=8082, validation_alias="PORT")
     open_admin_browser: bool = Field(default=True, validation_alias="FCC_OPEN_BROWSER")
     proxy_auth_enabled: bool = Field(
@@ -706,6 +707,45 @@ class Settings(BaseModel):
         default="freecc",
         validation_alias="ANTHROPIC_AUTH_TOKEN",
     )
+
+    @field_validator("host")
+    @classmethod
+    def validate_server_host(cls, value: str) -> str:
+        if value.lower() == "localhost":
+            return "localhost"
+        host = value
+        if host.startswith("[") and host.endswith("]"):
+            host = host[1:-1]
+        if "%" in host:
+            raise ValueError("HOST must not include an IPv6 scope ID; use :: or ::1.")
+        try:
+            address = ip_address(host)
+        except ValueError as exc:
+            raise ValueError(
+                "HOST must be localhost, a loopback IP, 0.0.0.0, or ::."
+            ) from exc
+        if not (address.is_loopback or address.is_unspecified):
+            raise ValueError(
+                "HOST must include a loopback listener for the local Admin UI. "
+                "Use 0.0.0.0 or :: with PROXY_AUTH_ENABLED=true and a custom "
+                "ANTHROPIC_AUTH_TOKEN for network access."
+            )
+        return str(address)
+
+    @model_validator(mode="after")
+    def validate_network_authentication(self) -> Settings:
+        if self.host in {"0.0.0.0", "::"}:
+            if not self.proxy_auth_enabled:
+                raise ValueError(
+                    "Network binds require PROXY_AUTH_ENABLED=true. "
+                    "Use HOST=127.0.0.1 for unauthenticated local access."
+                )
+            if self.proxy_auth_token == "freecc":
+                raise ValueError(
+                    "Network binds require a custom ANTHROPIC_AUTH_TOKEN; "
+                    "replace the default freecc token in Admin or ~/.fcc/.env."
+                )
+        return self
 
     @field_validator("max_message_log_entries_per_chat", mode="before")
     @classmethod

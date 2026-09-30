@@ -10,6 +10,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 from urllib.error import URLError
+from urllib.parse import urlsplit
 
 import pytest
 import uvicorn
@@ -19,6 +20,7 @@ from free_claude_code.cli import commands
 from free_claude_code.cli.launchers import common
 from free_claude_code.cli.server_socket import ServerSockets
 from free_claude_code.cli.uvicorn_server import RuntimeServer
+from free_claude_code.config.server_urls import local_proxy_root_url
 from free_claude_code.config.settings import Settings
 
 
@@ -46,6 +48,24 @@ def test_listeners_remain_exclusive_until_owner_closes():
             ServerSockets.reserve("127.0.0.1", port)
     with ServerSockets.reserve("127.0.0.1", port) as replacement:
         assert replacement.sockets[0].getsockname()[1] == port
+
+
+@pytest.mark.parametrize("host", ["0.0.0.0", "::"])
+def test_wildcard_listener_accepts_generated_local_client_url(host):
+    if host == "::" and not socket.has_ipv6:
+        pytest.skip("IPv6 is unavailable on this platform")
+    settings = Settings(
+        host=host,
+        port=0,
+        proxy_auth_enabled=True,
+        proxy_auth_token="custom-token",
+    )
+    with ServerSockets.reserve(settings.host, settings.port) as owner:
+        port = owner.sockets[0].getsockname()[1]
+        settings = settings.model_copy(update={"port": port})
+        url = urlsplit(local_proxy_root_url(settings))
+        with socket.create_connection((url.hostname, url.port), timeout=1):
+            pass
 
 
 def test_partial_address_failure_closes_every_reserved_socket(monkeypatch):
