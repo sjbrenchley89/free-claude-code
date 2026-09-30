@@ -170,4 +170,4 @@ allowed-unresolved-imports = [
 ]
 
 [tool.vercel]
-entrypoint = "api/vercel.py"
+entrypoint = "api.vercel:app"
