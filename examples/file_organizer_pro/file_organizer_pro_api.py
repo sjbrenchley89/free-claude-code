@@ -327,6 +327,8 @@ async def create_organization_task(
         background_tasks.add_task(organize_directory, task_manager, task_id, request)
 
         task = task_manager.get_task(task_id)
+        if task is None:
+            raise RuntimeError("Task was not created")
         return TaskResponse(
             task_id=task_id,
             status=task["status"],
