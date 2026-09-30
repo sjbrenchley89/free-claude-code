@@ -29,8 +29,10 @@ Set these service variables:
 
 Generate the token locally with `python -c 'import secrets; print(secrets.token_urlsafe(48))'`
 and save it as a Railway secret. Keep it out of source control and logs. Supply
-the same token to API clients using `Authorization: Bearer <token>` or
-`x-api-key: <token>`. To rotate it, update `FCC_DEPLOY_AUTH_TOKEN` and redeploy.
+the same token to API clients using `Authorization: Bearer <token>`.
+Anthropic `/v1/messages` and `/v1/messages/count_tokens` routes also accept
+`x-api-key: <token>`; model catalog and other routes require Bearer auth.
+To rotate it, update `FCC_DEPLOY_AUTH_TOKEN` and redeploy.
 FCC deliberately uses a managed auth token, so setting only
 `ANTHROPIC_AUTH_TOKEN` in the process environment does not replace this bootstrap.
 
