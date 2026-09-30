@@ -79,7 +79,7 @@ packages = ["src/free_claude_code"]
 "scripts/update/fcc-update.cmd" = "fcc-update.cmd"
 
 [tool.uv]
-required-version = ">=0.12.13"
+required-version = ">=0.10.11"
 cache-keys = [{ file = "pyproject.toml" }, { git = { commit = true, tags = true } }]
 
 [tool.uv.sources]
@@ -108,21 +108,21 @@ line-length = 88
 
 [tool.ruff.lint]
 select = [
-    "E",    # pycodestyle errors
-    "W",    # pycodestyle warnings
-    "F",    # Pyflakes (undefined names, unused imports)
-    "I",    # isort (import ordering)
-    "UP",   # pyupgrade (modernise syntax for target Python version)
-    "B",    # flake8-bugbear (common bugs and anti-patterns)
-    "C4",   # flake8-comprehensions (idiomatic comprehensions)
-    "SIM",  # flake8-simplify (simplifiable code patterns)
-    "PERF", # Perflint (performance anti-patterns)
-    "RUF",  # Ruff-specific rules
+    "E",
+    "W",
+    "F",
+    "I",
+    "UP",
+    "B",
+    "C4",
+    "SIM",
+    "PERF",
+    "RUF",
 ]
 ignore = [
-    "E501",  # line too long — enforced by the formatter instead
-    "B008",  # FastAPI Depends() in argument defaults is intentional
-    "RUF006",  # fire-and-forget tasks intentionally not awaited
+    "E501",
+    "B008",
+    "RUF006",
 ]
 
 [tool.ruff.lint.isort]
@@ -139,7 +139,6 @@ pythonpath = ["src"]
 addopts = "-n auto --dist=worksteal"
 filterwarnings = [
     "error",
-    # Starlette's test client uses this deprecated alias, including in 1.6.0.
     'ignore:^The anyio\.abc\.BlockingPortal alias is deprecated, use anyio\.from_thread\.BlockingPortal instead\.$:DeprecationWarning:^starlette\.testclient$',
 ]
 testpaths = ["tests"]
@@ -160,7 +159,6 @@ markers = [
 python-version = "3.14"
 
 [tool.ty.analysis]
-# Optional voice_local extra: torch, transformers, librosa for local whisper transcription
 allowed-unresolved-imports = [
     "torch",
     "transformers",
