@@ -9,7 +9,7 @@ description = "Local proxy connecting coding agents to OpenAI-compatible AI prov
 readme = "README.md"
 license = "AGPL-3.0-only"
 license-files = ["LICENSE"]
-requires-python = "==3.14.7"
+requires-python = ">=3.11"
 dependencies = [
     "packaging>=26.3",
     "anyio>=4.15.1",
@@ -79,7 +79,7 @@ packages = ["src/free_claude_code"]
 "scripts/update/fcc-update.cmd" = "fcc-update.cmd"
 
 [tool.uv]
-required-version = ">=0.12.13"
+required-version = ">=0.10.0"
 cache-keys = [{ file = "pyproject.toml" }, { git = { commit = true, tags = true } }]
 
 [tool.uv.sources]
@@ -103,7 +103,7 @@ dev = [
 ]
 
 [tool.ruff]
-target-version = "py314"
+target-version = "py311"
 line-length = 88
 
 [tool.ruff.lint]
@@ -157,7 +157,7 @@ markers = [
 ]
 
 [tool.ty.environment]
-python-version = "3.14"
+python-version = "3.11"
 
 [tool.ty.analysis]
 # Optional voice_local extra: torch, transformers, librosa for local whisper transcription
