@@ -11,6 +11,8 @@ const state = {
   authStatuses: new Map(),
   providerChecks: new Map(),
   providerId: null,
+  customProvider: null,
+  modelLabels: new Map(),
   localStatusRequest: null,
   startup: null,
   startupRequest: null,
@@ -121,12 +123,12 @@ function renderStartup() {
   const message = byId("startupMessage");
   if (message) {
     const messaging = startup?.messaging;
-    const visible = state.activeView === "messaging" && ["starting", "failed"].includes(messaging?.state);
+    const visible = state.activeView === "messaging" && (["starting", "failed"].includes(messaging?.state) || Boolean(messaging?.warning));
     message.hidden = !visible;
     message.classList.toggle("startup-spinner", visible && messaging.state === "starting");
     message.classList.toggle("error", messaging?.state === "failed");
-    message.textContent = messaging?.state === "failed" ? messaging.message || "Messaging could not start." : "";
-    message.setAttribute("aria-label", "Messaging is starting");
+    message.textContent = messaging?.state === "failed" ? messaging.message || "Messaging could not start." : messaging?.warning || "";
+    message.setAttribute("aria-label", messaging?.state === "starting" ? "Messaging is starting" : "Messaging status");
   }
   if (!startup) return;
   document.querySelectorAll("[data-startup-provider]").forEach((button) => {
@@ -139,6 +141,7 @@ function renderStartup() {
     renderProviderCheckResult(provider.provider_id);
   });
   renderClaudeIntegration();
+  renderVSCodeChatIntegration();
   renderJetBrainsIntegration();
   renderCodexIntegration();
   renderClaudeDesktopIntegration();
@@ -209,7 +212,10 @@ async function load({ providersOnly = false } = {}) {
   state.startupRequest = null;
   showMessage("Loading admin config");
   const config = await api("/admin/api/config");
+  config.custom_providers ||= [];
+  config.provider_status.push(...config.custom_providers.map((provider) => ({ ...provider, kind: "custom", status: "configured", settings_keys: [], missing_configuration_keys: [] })));
   state.config = config;
+  window.CodeSessions.setProviderNames(config.custom_providers);
   state.startup = null;
   state.fields = new Map(config.fields.map((field) => [field.key, field]));
   if (!providersOnly) renderNav();
@@ -286,6 +292,7 @@ function setActiveView(viewId, { scroll = false } = {}) {
   else window.CodeSessions.deactivate();
   if (activeView.id === "integrations") {
     refreshClaudeIntegration();
+    refreshVSCodeChatIntegration();
     refreshJetBrainsIntegration();
     refreshCodexIntegration();
     refreshClaudeDesktopIntegration();
@@ -334,6 +341,25 @@ function renderProviders(providerStatus) {
     });
     container.appendChild(group);
   });
+  const custom = document.createElement("section");
+  custom.className = "provider-strip";
+  custom.dataset.providerGroup = "custom";
+  const heading = document.createElement("h3");
+  heading.textContent = "Custom providers";
+  const add = authButton("Add provider", () => openCustomProviderDialog(), "primary-button");
+  add.id = "addCustomProvider";
+  add.disabled = !!state.config.custom_providers_locked;
+  const empty = document.createElement("p");
+  empty.textContent = "No custom providers yet.";
+  empty.hidden = state.config.custom_providers.length > 0;
+  const grid = document.createElement("div");
+  grid.className = "provider-grid";
+  grid.id = "providers-custom";
+  const header = document.createElement("div");
+  header.className = "strip-header";
+  header.append(heading, add);
+  custom.append(header, empty, grid);
+  container.appendChild(custom);
   providerStatus.forEach(updateProviderCard);
 }
 
@@ -343,7 +369,7 @@ function updateProviderCard(provider) {
   const kind = oauth ? "oauth" : provider.kind === "local" ? "local" : "cloud";
   const configured = oauth ? status?.connected : provider.status === "configured";
   const subgroup = oauth && configured == null ? "loading" : configured ? "configured" : "unconfigured";
-  const grid = byId(`providers-${kind}-${subgroup}`);
+  const grid = byId(provider.kind === "custom" ? "providers-custom" : `providers-${kind}-${subgroup}`);
   let card = document.querySelector(`[data-provider="${provider.provider_id}"]`);
   if (!card) {
     card = document.createElement("article");
@@ -362,12 +388,12 @@ function updateProviderCard(provider) {
   website.rel = "noopener noreferrer";
   const logo = document.createElement("img");
   logo.className = "provider-logo";
-  logo.src = new URL(`providers/${provider.logo_filename}`, adminAssetBase);
+  if (provider.logo_filename) logo.src = new URL(`providers/${provider.logo_filename}`, adminAssetBase);
   logo.alt = "";
   logo.width = 20;
   logo.height = 20;
   website.append(name, logo);
-  title.appendChild(website);
+  title.appendChild(provider.kind === "custom" ? name : website);
   const meta = document.createElement("span");
   meta.className = "provider-meta";
   meta.hidden = !oauth;
@@ -378,7 +404,7 @@ function updateProviderCard(provider) {
   const actions = document.createElement("div");
   actions.className = "provider-actions";
   if (oauth) populateConnectedAccountActions(provider, status, actions);
-  if (provider.settings_keys?.length) {
+  if (provider.kind === "custom" || provider.settings_keys?.length) {
     const edit = oauth || configured;
     const settings = authButton(edit ? "Edit" : "Configure", () => openProviderDialog(provider.provider_id), edit ? "secondary-button" : "primary-button");
     settings.dataset.providerSettings = "true";
@@ -401,6 +427,8 @@ function updateProviderCard(provider) {
 }
 
 function openProviderDialog(providerId) {
+  if (connectedAccountDescriptor(providerId)?.kind === "custom") return openCustomProviderDialog(providerId);
+  state.customProvider = null;
   state.providerId = providerId;
   const provider = connectedAccountDescriptor(providerId);
   byId("providerDialogTitle").textContent = connectedAccountName(provider);
@@ -429,7 +457,70 @@ function openProviderDialog(providerId) {
   first?.focus();
 }
 
+const CUSTOM_LABELS = {
+  provider_default: "Provider default", openai_effort: "OpenAI effort", limited_effort: "Limited effort (low / medium / high)",
+  reasoning_object: "Reasoning object", thinking: "Thinking on/off", chat_template: "Chat-template thinking",
+  native_responses: "Native reasoning", messages_manual: "Token-budget thinking", messages_adaptive: "Adaptive thinking",
+};
+
+function openCustomProviderDialog(providerId = null) {
+  const provider = state.config.custom_providers.find((item) => item.provider_id === providerId) || {
+    display_name: "", base_url: "", api_key: null, api_format: "openai_chat", reasoning_format: "provider_default", reasoning_history_format: "disabled", model_ids: [],
+  };
+  state.providerId = providerId || "__custom_new__";
+  state.customProvider = provider;
+  byId("providerDialogTitle").textContent = providerId ? provider.display_name : "Add provider";
+  byId("providerMessage").textContent = "";
+  byId("providerDialogCheck").hidden = true;
+  const fields = byId("providerFields");
+  fields.replaceChildren();
+  const formats = (state.config.custom_reasoning_formats || {})[provider.api_format] || ["provider_default"];
+  const definitions = [
+    ["display_name", "Name", "string", [], ""],
+    ["base_url", "Base URL", "string", [], "Include the API path, for example https://gateway.example/v1."],
+    ["api_key", "API key", "secret", [], "Optional for endpoints that do not require a key."],
+    ["api_format", "API format", "select", [["openai_chat", "Chat Completions"], ["openai_responses", "Responses"], ["anthropic_messages", "Anthropic Messages"]], "Select the API exposed by your endpoint."],
+    ["reasoning_format", "Reasoning format", "select", formats.map((value) => [value, CUSTOM_LABELS[value]]), "How FCC sends reasoning controls. Provider default leaves computation to the upstream."],
+    ["reasoning_history_format", "Reasoning history format", "select", [["disabled", "Text context"], ["reasoning_content", "reasoning_content"], ["reasoning", "reasoning"], ["think_tags", "Think tags"]], "How previous reasoning is sent to a Chat Completions endpoint."],
+    ["model_ids", "Model IDs", "textarea", [], "Optional, one upstream model ID per line. Leave empty to discover models automatically."],
+  ];
+  for (const [key, label, type, options, description] of definitions) {
+    fields.appendChild(renderField({ key, label, type, options: options.map(([value, label]) => ({value, label})), description,
+      value: key === "model_ids" ? provider.model_ids.join("\n") : provider[key], nullable: key === "api_key", secret: key === "api_key",
+      configured: key === "api_key" && !!provider.api_key, locked: !!state.config.custom_providers_locked, source: "managed_env" }));
+  }
+  const format = byId("field-api_format");
+  const reasoning = byId("field-reasoning_format");
+  const history = byId("field-reasoning_history_format");
+  history.closest(".field").hidden = format.value !== "openai_chat";
+  format.addEventListener("change", () => {
+    const allowed = state.config.custom_reasoning_formats[format.value];
+    const previous = reasoning.value;
+    reasoning.replaceChildren(...allowed.map((value) => option(value, CUSTOM_LABELS[value])));
+    reasoning.value = allowed.includes(previous) ? previous : "provider_default";
+    history.closest(".field").hidden = format.value !== "openai_chat";
+    if (format.value !== "openai_chat") history.value = "disabled";
+    updateDirtyState();
+  });
+  const actions = byId("providerDialogActions");
+  actions.replaceChildren();
+  if (providerId && !state.config.custom_providers_locked) {
+    if (!provider.model_ids.length) actions.appendChild(authButton("Refresh models", (button) => testProvider(providerId, button), "secondary-button"));
+    actions.appendChild(authButton("Remove provider", () => apply(providerId, "delete"), "danger-button"));
+    const modelConfig = document.createElement("a");
+    modelConfig.href = "/admin/model_config";
+    modelConfig.textContent = "Model Config";
+    modelConfig.addEventListener("click", (event) => { event.preventDefault(); byId("providerDialog").close(); navigateToView("model_config"); });
+    actions.appendChild(modelConfig);
+  }
+  byId("saveProvider").hidden = false;
+  updateDirtyState();
+  byId("providerDialog").showModal();
+  byId("field-display_name").focus();
+}
+
 function renderProviderDialogActions(provider) {
+  if (state.customProvider) return;
   if (state.providerId !== provider.provider_id) return;
   const actions = byId("providerDialogActions");
   actions.replaceChildren();
@@ -855,6 +946,7 @@ function renderField(field) {
 }
 
 function inputForField(field) {
+  if (field.type === "textarea") { const input = document.createElement("textarea"); input.rows = 3; input.value = field.value || ""; return input; }
   if (field.type === "boolean") {
     const input = document.createElement("input");
     input.type = "checkbox";
@@ -914,6 +1006,7 @@ function createModelCombobox(input, field) {
   return new window.FccModelCombobox(input, {
     listboxId: `model-options-${field.key}`,
     label: field.label,
+    displayValue: (value) => state.modelLabels.get(value) || value,
     values: () =>
       field.type === "optional_model"
         ? ["None", ...state.modelOptions]
@@ -1219,14 +1312,22 @@ function showRestartNotice() {
   }
 }
 
-async function apply(providerId = null) {
+async function apply(providerId = null, customAction = null) {
   if (state.applying) return;
   if (state.restart) {
     await reconnectAfterRestart();
     return;
   }
   const values = changedValues(providerId ? byId("providerFields") : byId("adminViews"));
-  if (!Object.keys(values).length) return;
+  const custom = providerId && state.customProvider;
+  let mutation = null;
+  if (custom) {
+    const action = customAction || (custom.provider_id ? "update" : "create");
+    if ("model_ids" in values) values.model_ids = values.model_ids.split(/\r?\n/).map((id) => id.trim()).filter(Boolean);
+    mutation = { action, values: action === "delete" ? {} : values };
+    if (custom.provider_id) mutation.provider_id = custom.provider_id;
+  }
+  if (!Object.keys(values).length && mutation?.action !== "delete") return;
   const checkingKeys = Object.keys(values).some((key) => {
     const field = state.fields.get(key);
     return field?.secret && field.section === "providers" && values[key] !== null;
@@ -1238,7 +1339,7 @@ async function apply(providerId = null) {
   try {
     const result = await api("/admin/api/config/apply", {
       method: "POST",
-      body: JSON.stringify({ values }),
+      body: JSON.stringify(mutation ? { custom_provider: mutation } : { values }),
     });
     const checks = result.credential_checks || [];
     if (!result.applied) {
@@ -1273,7 +1374,10 @@ async function apply(providerId = null) {
       rejectedField.scrollIntoView({ block: "center", behavior: "instant" });
       rejectedField.focus();
     } else if (providerId && applied) {
-      document.querySelector(`[data-provider="${providerId}"] [data-provider-settings]`)?.focus({ preventScroll: true });
+      const focus = mutation && mutation.action !== "update"
+        ? byId("addCustomProvider")
+        : document.querySelector(`[data-provider="${providerId}"] [data-provider-settings]`);
+      focus?.focus({ preventScroll: true });
     }
   }
 }
@@ -1286,41 +1390,26 @@ async function refreshLocalStatus(config) {
   };
   state.localStatusRequest = request;
   try {
-    const result = await api("/admin/api/providers/local-status");
-    if (state.localStatusRequest !== request) return;
-    result.providers.forEach((provider) => {
-      if (!request.providerIds.has(provider.provider_id) || provider.status === "missing_url") return;
-      if (provider.status === "reachable") {
-        updateProviderCheckResult(
-          provider.provider_id,
-          "ok",
-          `Reachable: ${provider.base_url}`,
-          "availability",
-        );
-        return;
+    await Promise.all([...request.providerIds].map(async (providerId) => {
+      try {
+        const provider = await api(`/admin/api/providers/${providerId}/local-status`);
+        if (state.localStatusRequest !== request || !request.providerIds.has(providerId)) return;
+        if (provider.status === "missing_url") return;
+        if (provider.status === "reachable") {
+          updateProviderCheckResult(providerId, "ok", `Reachable: ${provider.base_url}`, "availability");
+          return;
+        }
+        const detail = provider.message
+          ? provider.message
+          : provider.status_code
+            ? `${provider.base_url} returned HTTP ${provider.status_code}`
+            : "The local provider did not respond.";
+        updateProviderCheckResult(providerId, "error", `Unavailable: ${detail}`, "availability");
+      } catch {
+        if (state.localStatusRequest !== request || !request.providerIds.has(providerId)) return;
+        updateProviderCheckResult(providerId, "error", "Availability check failed. Use Test to retry.", "availability");
       }
-      const detail = provider.message
-        ? provider.message
-        : provider.status_code
-          ? `${provider.base_url} returned HTTP ${provider.status_code}`
-          : "The local provider did not respond.";
-      updateProviderCheckResult(
-        provider.provider_id,
-        "error",
-        `Unavailable: ${detail}`,
-        "availability",
-      );
-    });
-  } catch {
-    if (state.localStatusRequest !== request) return;
-    request.providerIds.forEach((providerId) => {
-      updateProviderCheckResult(
-        providerId,
-        "error",
-        "Availability check failed. Use Test to retry.",
-        "availability",
-      );
-    });
+    }));
   } finally {
     if (state.localStatusRequest === request) state.localStatusRequest = null;
   }
@@ -1385,7 +1474,7 @@ async function loadModelOptions(refresh = false) {
   const result = await api("/admin/api/models" + (refresh ? "/refresh" : ""), {
     method: refresh ? "POST" : "GET",
   });
-  if (request === state.modelOptionsRequest && config === state.config) setModelOptions(result.models);
+  if (request === state.modelOptionsRequest && config === state.config) { state.modelLabels = new Map(Object.entries(result.model_labels || {})); setModelOptions(result.models); }
   if (refresh && window.CodeSessions) await window.CodeSessions.refresh();
   return result;
 }
@@ -1459,6 +1548,8 @@ byId("providerDialog").addEventListener("click", (event) => {
 byId("providerDialog").addEventListener("close", () => {
   if (byId("providerDialog").open) return;
   const providerId = state.providerId;
+  const wasCustom = !!state.customProvider;
+  state.customProvider = null;
   state.providerId = null;
   byId("providerFields").replaceChildren();
   updateDirtyState();
@@ -1499,18 +1590,45 @@ function integrationUpdating(integration, id) {
     state.startup?.startup?.integrations?.[id]?.state === "starting";
 }
 
+function beginIntegrationCheck(integration) {
+  if (integration.busy && (!integration.checkRequest || integration.checkRequest.config === state.config)) return null;
+  const request = { config: state.config };
+  integration.checkRequest = request;
+  integration.busy = true;
+  return request;
+}
+
+function currentIntegrationCheck(integration, request) {
+  return integration.checkRequest === request && request.config === state.config;
+}
+
+function finishIntegrationCheck(integration, request, render) {
+  if (integration.checkRequest !== request) return;
+  integration.checkRequest = null;
+  integration.busy = false;
+  render();
+  if (request.config === state.config && integration.update?.state === "starting") void refreshStartup();
+}
+
 function refreshIntegrationUpdates(previous, current) {
   if (state.activeView !== "integrations") return;
   for (const [id, integration, refresh, messageId, message] of [
+    ["vscode-chat", vscodeChatIntegration, refreshVSCodeChatIntegration, "vscodeChatIntegrationMessage", "Models updated in VS Code."],
     ["claude-vscode", claudeIntegration, refreshClaudeIntegration, "claudeIntegrationMessage", "Settings updated. Reload VS Code."],
     ["jetbrains-acp", jetBrainsIntegration, refreshJetBrainsIntegration, "jetBrainsIntegrationMessage", "Settings updated. Reopen JetBrains and start a new chat."],
     ["codex", codexIntegration, refreshCodexIntegration, "codexIntegrationMessage", "Settings updated. Restart Codex."],
     ["claude-desktop", claudeDesktopIntegration, refreshClaudeDesktopIntegration, "claudeDesktopIntegrationMessage", "Settings updated. Reopen Claude Desktop."],
   ]) {
     const phase = current?.[id]?.state;
+    // Successful actions clear update metadata, not the last observed state.
+    const observedPhase = integration.update?.state ?? previous?.[id]?.state;
+    // Polling can miss a short update. Reconcile state independently of notices.
     if (phase && phase !== "starting" && (
-      previous?.[id]?.state === "starting" || integration.update?.state === "starting"
-    )) void refresh(false, { background: true });
+      previous?.[id]?.state === "starting" || observedPhase !== phase
+    )) {
+      if (integration.busy) state.startupAgain = true;
+      else void refresh(false, { background: true });
+    }
     if (previous?.[id]?.state === "starting" && phase === "ready" && current[id].changed === true) {
       integrationMessage(messageId, message);
     }
@@ -1547,25 +1665,25 @@ function renderClaudeIntegration() {
 
 async function refreshClaudeIntegration(retry = false, { background = false } = {}) {
   if (!background) integrationMessage("claudeIntegrationMessage", "");
-  if (claudeIntegration.busy) return;
-  claudeIntegration.busy = true;
+  const request = beginIntegrationCheck(claudeIntegration);
+  if (!request) return;
   renderClaudeIntegration();
   try {
     if (retry) await api(`${claudeIntegrationPath}/refresh`, { method: "POST" });
     const result = await api(claudeIntegrationPath);
+    if (!currentIntegrationCheck(claudeIntegration, request)) return;
     claudeIntegration.connected = result.connected;
     claudeIntegration.paths = result.paths;
     claudeIntegration.update = result.update;
     if (result.update?.state === "failed") integrationMessage("claudeIntegrationMessage", result.update.message, true);
     else if (byId("claudeIntegrationMessage").classList.contains("error")) integrationMessage("claudeIntegrationMessage", "");
   } catch (error) {
+    if (!currentIntegrationCheck(claudeIntegration, request)) return;
     claudeIntegration.connected = null;
     claudeIntegration.update = null;
     integrationMessage("claudeIntegrationMessage", error.message, true);
   } finally {
-    claudeIntegration.busy = false;
-    renderClaudeIntegration();
-    if (claudeIntegration.update?.state === "starting") void refreshStartup();
+    finishIntegrationCheck(claudeIntegration, request, renderClaudeIntegration);
   }
 }
 
@@ -1609,6 +1727,105 @@ claudeIntegrationDialog.addEventListener("click", (event) => {
   }
 });
 
+const vscodeChatIntegrationDialog = byId("vscodeChatIntegrationDialog");
+const vscodeChatIntegration = { connected: null, busy: false, paths: null, update: null };
+const vscodeChatIntegrationPath = "/admin/api/integrations/vscode-chat";
+
+function renderVSCodeChatIntegration() {
+  const { connected, paths } = vscodeChatIntegration;
+  const busy = vscodeChatIntegration.busy || integrationUpdating(vscodeChatIntegration, "vscode-chat");
+  byId("retryVSCodeChatIntegration").hidden = connected === null || vscodeChatIntegration.update?.state !== "failed";
+  byId("retryVSCodeChatIntegration").disabled = busy;
+  const action = connected ? "Disconnect" : "Connect";
+  byId("openVSCodeChatIntegration").textContent = busy ? "Loading…" : connected === null ? "Retry" : action;
+  byId("openVSCodeChatIntegration").disabled = busy;
+  byId("openVSCodeChatIntegration").setAttribute("aria-busy", String(busy));
+  byId("confirmVSCodeChatIntegration").textContent = busy ? "Saving…" : action;
+  byId("confirmVSCodeChatIntegration").disabled = busy || connected === null;
+  byId("openVSCodeChatIntegration").className = connected && !busy ? "danger-button" : "primary-button";
+  byId("confirmVSCodeChatIntegration").className = connected ? "danger-button" : "primary-button";
+  byId("vscodeChatIntegrationDescription").textContent = connected
+    ? "Remove FCC's model group from VS Code Chat."
+    : "Add FCC models to VS Code Chat. Your selected models stay unchanged.";
+  const files = byId("vscodeChatIntegrationFiles");
+  files.replaceChildren();
+  if (paths) {
+    const targets = [paths.vscode_models];
+    targets.forEach((path) => {
+      const item = document.createElement("li");
+      const code = document.createElement("code");
+      code.textContent = path;
+      item.appendChild(code);
+      files.appendChild(item);
+    });
+  }
+}
+
+async function refreshVSCodeChatIntegration(retry = false, { background = false } = {}) {
+  if (!background) integrationMessage("vscodeChatIntegrationMessage", "");
+  const request = beginIntegrationCheck(vscodeChatIntegration);
+  if (!request) return;
+  renderVSCodeChatIntegration();
+  try {
+    if (retry) await api(`${vscodeChatIntegrationPath}/refresh`, { method: "POST" });
+    const result = await api(vscodeChatIntegrationPath);
+    if (!currentIntegrationCheck(vscodeChatIntegration, request)) return;
+    vscodeChatIntegration.connected = result.connected;
+    vscodeChatIntegration.paths = result.paths;
+    vscodeChatIntegration.update = result.update;
+    if (result.update?.state === "failed") integrationMessage("vscodeChatIntegrationMessage", result.update.message, true);
+    else if (byId("vscodeChatIntegrationMessage").classList.contains("error")) integrationMessage("vscodeChatIntegrationMessage", "");
+  } catch (error) {
+    if (!currentIntegrationCheck(vscodeChatIntegration, request)) return;
+    vscodeChatIntegration.connected = null;
+    vscodeChatIntegration.update = null;
+    integrationMessage("vscodeChatIntegrationMessage", error.message, true);
+  } finally {
+    finishIntegrationCheck(vscodeChatIntegration, request, renderVSCodeChatIntegration);
+  }
+}
+
+byId("openVSCodeChatIntegration").addEventListener("click", () => {
+  if (vscodeChatIntegration.connected === null) {
+    refreshVSCodeChatIntegration(true);
+    return;
+  }
+  integrationMessage("vscodeChatIntegrationDialogMessage", "");
+  vscodeChatIntegrationDialog.showModal();
+});
+byId("retryVSCodeChatIntegration").addEventListener("click", () => refreshVSCodeChatIntegration(true));
+byId("confirmVSCodeChatIntegration").addEventListener("click", async () => {
+  if (byId("confirmVSCodeChatIntegration").disabled) return;
+  const disconnect = vscodeChatIntegration.connected;
+  vscodeChatIntegration.busy = true;
+  renderVSCodeChatIntegration();
+  integrationMessage("vscodeChatIntegrationDialogMessage", "");
+  integrationMessage("vscodeChatIntegrationMessage", "");
+  try {
+    const result = await api(`${vscodeChatIntegrationPath}/${disconnect ? "disconnect" : "connect"}`, { method: "POST" });
+    vscodeChatIntegration.connected = result.connected;
+    vscodeChatIntegration.update = null;
+    vscodeChatIntegrationDialog.close();
+    integrationMessage("vscodeChatIntegrationMessage", disconnect
+      ? "Settings removed. Reload VS Code to disconnect."
+      : "Models saved. Select an FCC model in VS Code Chat. Reload VS Code if needed.");
+  } catch (error) {
+    integrationMessage("vscodeChatIntegrationDialogMessage", error.message, true);
+    integrationMessage("vscodeChatIntegrationMessage", error.message, true);
+  } finally {
+    vscodeChatIntegration.busy = false;
+    renderVSCodeChatIntegration();
+  }
+});
+byId("closeVSCodeChatIntegration").addEventListener("click", () => vscodeChatIntegrationDialog.close());
+vscodeChatIntegrationDialog.addEventListener("click", (event) => {
+  if (event.target !== vscodeChatIntegrationDialog) return;
+  const bounds = vscodeChatIntegrationDialog.getBoundingClientRect();
+  if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) {
+    vscodeChatIntegrationDialog.close();
+  }
+});
+
 const codexIntegrationDialog = byId("codexIntegrationDialog");
 const codexIntegration = { connected: null, busy: false, paths: null, update: null };
 const codexIntegrationPath = "/admin/api/integrations/codex";
@@ -1648,25 +1865,25 @@ function renderCodexIntegration() {
 
 async function refreshCodexIntegration(retry = false, { background = false } = {}) {
   if (!background) integrationMessage("codexIntegrationMessage", "");
-  if (codexIntegration.busy) return;
-  codexIntegration.busy = true;
+  const request = beginIntegrationCheck(codexIntegration);
+  if (!request) return;
   renderCodexIntegration();
   try {
     if (retry) await api(`${codexIntegrationPath}/refresh`, { method: "POST" });
     const result = await api(codexIntegrationPath);
+    if (!currentIntegrationCheck(codexIntegration, request)) return;
     codexIntegration.connected = result.connected;
     codexIntegration.paths = result.paths;
     codexIntegration.update = result.update;
     if (result.update?.state === "failed") integrationMessage("codexIntegrationMessage", result.update.message, true);
     else if (byId("codexIntegrationMessage").classList.contains("error")) integrationMessage("codexIntegrationMessage", "");
   } catch (error) {
+    if (!currentIntegrationCheck(codexIntegration, request)) return;
     codexIntegration.connected = null;
     codexIntegration.update = null;
     integrationMessage("codexIntegrationMessage", error.message, true);
   } finally {
-    codexIntegration.busy = false;
-    renderCodexIntegration();
-    if (codexIntegration.update?.state === "starting") void refreshStartup();
+    finishIntegrationCheck(codexIntegration, request, renderCodexIntegration);
   }
 }
 
@@ -1745,25 +1962,25 @@ function renderJetBrainsIntegration() {
 
 async function refreshJetBrainsIntegration(retry = false, { background = false } = {}) {
   if (!background) integrationMessage("jetBrainsIntegrationMessage", "");
-  if (jetBrainsIntegration.busy) return;
-  jetBrainsIntegration.busy = true;
+  const request = beginIntegrationCheck(jetBrainsIntegration);
+  if (!request) return;
   renderJetBrainsIntegration();
   try {
     if (retry) await api(`${jetBrainsIntegrationPath}/refresh`, { method: "POST" });
     const result = await api(jetBrainsIntegrationPath);
+    if (!currentIntegrationCheck(jetBrainsIntegration, request)) return;
     jetBrainsIntegration.connected = result.connected;
     jetBrainsIntegration.paths = result.paths;
     jetBrainsIntegration.update = result.update;
     if (result.update?.state === "failed") integrationMessage("jetBrainsIntegrationMessage", result.update.message, true);
     else if (byId("jetBrainsIntegrationMessage").classList.contains("error")) integrationMessage("jetBrainsIntegrationMessage", "");
   } catch (error) {
+    if (!currentIntegrationCheck(jetBrainsIntegration, request)) return;
     jetBrainsIntegration.connected = null;
     jetBrainsIntegration.update = null;
     integrationMessage("jetBrainsIntegrationMessage", error.message, true);
   } finally {
-    jetBrainsIntegration.busy = false;
-    renderJetBrainsIntegration();
-    if (jetBrainsIntegration.update?.state === "starting") void refreshStartup();
+    finishIntegrationCheck(jetBrainsIntegration, request, renderJetBrainsIntegration);
   }
 }
 
@@ -1844,12 +2061,13 @@ function renderClaudeDesktopIntegration() {
 
 async function refreshClaudeDesktopIntegration(retry = false, { background = false } = {}) {
   if (!background) integrationMessage("claudeDesktopIntegrationMessage", "");
-  if (claudeDesktopIntegration.busy) return;
-  claudeDesktopIntegration.busy = true;
+  const request = beginIntegrationCheck(claudeDesktopIntegration);
+  if (!request) return;
   renderClaudeDesktopIntegration();
   try {
     if (retry) await api(`${claudeDesktopIntegrationPath}/refresh`, { method: "POST" });
     const result = await api(claudeDesktopIntegrationPath);
+    if (!currentIntegrationCheck(claudeDesktopIntegration, request)) return;
     claudeDesktopIntegration.connected = result.connected;
     claudeDesktopIntegration.disconnectPending = result.disconnect_pending;
     claudeDesktopIntegration.paths = result.paths;
@@ -1857,14 +2075,13 @@ async function refreshClaudeDesktopIntegration(retry = false, { background = fal
     if (result.update?.state === "failed") integrationMessage("claudeDesktopIntegrationMessage", result.update.message, true);
     else if (byId("claudeDesktopIntegrationMessage").classList.contains("error")) integrationMessage("claudeDesktopIntegrationMessage", "");
   } catch (error) {
+    if (!currentIntegrationCheck(claudeDesktopIntegration, request)) return;
     claudeDesktopIntegration.connected = null;
     claudeDesktopIntegration.disconnectPending = false;
     claudeDesktopIntegration.update = null;
     integrationMessage("claudeDesktopIntegrationMessage", error.message, true);
   } finally {
-    claudeDesktopIntegration.busy = false;
-    renderClaudeDesktopIntegration();
-    if (claudeDesktopIntegration.update?.state === "starting") void refreshStartup();
+    finishIntegrationCheck(claudeDesktopIntegration, request, renderClaudeDesktopIntegration);
   }
 }
 

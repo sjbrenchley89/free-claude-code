@@ -9,8 +9,10 @@ def _browser_host_for_local_urls(settings: Settings) -> str:
     """Host fragment for URLs shown to humans on the same machine as the server."""
 
     host = settings.host.strip() if settings.host else "127.0.0.1"
-    if host in {"0.0.0.0", "::", "[::]"}:
+    if host == "0.0.0.0":
         host = "127.0.0.1"
+    elif host in {"::", "[::]"}:
+        host = "::1"
     if ":" in host and not host.startswith("["):
         host = f"[{host}]"
     return host
