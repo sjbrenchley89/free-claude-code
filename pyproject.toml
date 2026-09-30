@@ -160,3 +160,6 @@ allowed-unresolved-imports = [
     "pystray",
     "PIL",
 ]
+
+[tool.vercel]
+entrypoint = "api/vercel.py"
