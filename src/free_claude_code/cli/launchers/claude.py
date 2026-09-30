@@ -1,5 +1,6 @@
 """Installed Claude launcher: native command handling with an FCC connection."""
 
+from __future__ import annotations
 from collections.abc import Sequence
 
 from free_claude_code.harnesses.claude import CLAUDE_BINARY_NAME, build_claude_proxy_env

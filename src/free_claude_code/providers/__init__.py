@@ -4,6 +4,7 @@ Ordinary OpenAI-compatible vendors are immutable profiles. Concrete adapter
 classes exist only for providers with stateful or algorithmic behavior.
 """
 
+from __future__ import annotations
 from .base import BaseProvider, ProviderConfig
 
 __all__ = [

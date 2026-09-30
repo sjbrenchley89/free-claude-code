@@ -1,5 +1,7 @@
 """Saved custom endpoint definitions, independent of provider resources."""
 
+from __future__ import annotations
+
 import json
 from typing import Literal
 

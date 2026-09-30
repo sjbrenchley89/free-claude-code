@@ -1,5 +1,6 @@
 """Outbound capabilities consumed by the local web-tool workflow."""
 
+from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 

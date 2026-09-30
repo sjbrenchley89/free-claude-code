@@ -1,5 +1,6 @@
 """FCC-owned coding conversation state and harness-neutral events."""
 
+from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 from typing import Literal

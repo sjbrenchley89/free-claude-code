@@ -1,5 +1,6 @@
 """Short-lived OS dialog helper; stdout carries only its JSON result."""
 
+from __future__ import annotations
 import json
 import os
 import shutil
@@ -39,7 +40,7 @@ def _initial_directory(value: str) -> str | None:
             path = Path(value).expanduser().resolve(strict=True)
             if path.is_dir():
                 return str(path)
-        except OSError, ValueError:
+        except (OSError, ValueError):
             pass
     return None
 

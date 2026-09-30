@@ -1,5 +1,6 @@
 """One-time, best-effort import of FCC's retired messaging JSON file."""
 
+from __future__ import annotations
 import json
 import sqlite3
 from collections.abc import Callable
@@ -38,7 +39,7 @@ def read_legacy(path: Path) -> LegacyData:
         raw = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError:
         return LegacyData(outcome="absent")
-    except OSError, UnicodeError, ValueError:
+    except (OSError, UnicodeError, ValueError):
         return LegacyData(outcome="unreadable", skipped=1)
     if not isinstance(raw, dict):
         return LegacyData(outcome="unreadable", skipped=1)
@@ -62,13 +63,13 @@ def read_legacy(path: Path) -> LegacyData:
             if snapshot.identity in decoded:
                 result.reject()
             decoded[snapshot.identity] = snapshot
-        except KeyError, TypeError, ValueError:
+        except (KeyError, TypeError, ValueError):
             result.reject()
     for snapshot in decoded.values():
         try:
             normalized = normalize_tree_snapshot(snapshot)
             result.trees[normalized.identity] = normalized
-        except KeyError, TypeError, ValueError:
+        except (KeyError, TypeError, ValueError):
             result.reject()
     messages = raw.get("managed_messages", raw.get("message_log", {}))
     if not isinstance(messages, dict):
@@ -119,7 +120,7 @@ def _try_import(connection: sqlite3.Connection, write: Callable[[], object]) -> 
     connection.execute("SAVEPOINT legacy_record")
     try:
         write()
-    except sqlite3.IntegrityError, UnicodeEncodeError:
+    except (sqlite3.IntegrityError, UnicodeEncodeError):
         connection.execute("ROLLBACK TO legacy_record")
         connection.execute("RELEASE legacy_record")
         return False

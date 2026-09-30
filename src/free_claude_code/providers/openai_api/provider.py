@@ -1,5 +1,6 @@
 """OpenAI Platform provider using the shared Responses transport."""
 
+from __future__ import annotations
 import re
 from collections.abc import AsyncIterator, Mapping
 

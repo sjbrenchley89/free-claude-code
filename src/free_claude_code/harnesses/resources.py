@@ -1,5 +1,6 @@
 """Private native configuration owned by one launcher process lifetime."""
 
+from __future__ import annotations
 import json
 import os
 import tempfile

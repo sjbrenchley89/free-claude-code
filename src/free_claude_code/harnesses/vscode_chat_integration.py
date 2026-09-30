@@ -1,5 +1,6 @@
 """Configure FCC's model group in the native VS Code chat model picker."""
 
+from __future__ import annotations
 import json
 from collections.abc import Sequence
 from pathlib import Path

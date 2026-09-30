@@ -1,5 +1,6 @@
 """OpenAI Chat Completions wire-history helpers."""
 
+from __future__ import annotations
 import json
 
 from free_claude_code.core.json_types import JsonObject, JsonValue

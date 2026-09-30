@@ -1,5 +1,6 @@
 """Throttled platform UI updates driven by transcript rendering."""
 
+from __future__ import annotations
 import time
 from collections.abc import Callable
 

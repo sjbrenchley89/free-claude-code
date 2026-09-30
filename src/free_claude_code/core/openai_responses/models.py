@@ -1,5 +1,6 @@
 """Pydantic models for OpenAI Responses-compatible ingress."""
 
+from __future__ import annotations
 from pydantic import BaseModel, ConfigDict, field_validator
 
 from free_claude_code.core.json_types import JsonObject, JsonValue

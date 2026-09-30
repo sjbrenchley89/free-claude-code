@@ -1,5 +1,6 @@
 """Messaging platform component factory."""
 
+from __future__ import annotations
 from dataclasses import dataclass
 
 from loguru import logger

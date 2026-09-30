@@ -1,5 +1,6 @@
 """Errors and error envelopes for OpenAI Responses compatibility."""
 
+from __future__ import annotations
 from typing import Any
 
 from free_claude_code.core.diagnostics import redact_sensitive_error_text

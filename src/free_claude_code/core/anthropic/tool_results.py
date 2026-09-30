@@ -1,5 +1,6 @@
 """Structured Anthropic tool-result content."""
 
+from __future__ import annotations
 import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass

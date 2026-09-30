@@ -1,5 +1,6 @@
 """Runtime capabilities consumed by the HTTP API adapter."""
 
+from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Protocol

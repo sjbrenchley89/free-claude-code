@@ -1,5 +1,6 @@
 """Client-owned lifetime boundary for long-running HTTP requests."""
 
+from __future__ import annotations
 import asyncio
 
 from starlette.types import ASGIApp, Message, Receive, Scope, Send

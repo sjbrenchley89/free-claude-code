@@ -1,5 +1,6 @@
 """Process-wide best-effort plain-text token estimation."""
 
+from __future__ import annotations
 from importlib import resources
 from threading import Lock
 from typing import Protocol

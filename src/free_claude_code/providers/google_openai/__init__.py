@@ -1,5 +1,6 @@
 """Shared Google OpenAI-compatible provider family."""
 
+from __future__ import annotations
 from .provider import GoogleOpenAIProvider
 from .reasoning import (
     GeminiReasoningEncoder,

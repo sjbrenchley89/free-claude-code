@@ -1,5 +1,6 @@
 """Shared OpenAI Responses execution over the official SDK."""
 
+from __future__ import annotations
 import asyncio
 import sys
 import uuid
@@ -438,7 +439,7 @@ class OpenAIResponsesTransport:
                     transport="responses",
                 )
                 return
-            except asyncio.CancelledError, GeneratorExit:
+            except (asyncio.CancelledError, GeneratorExit):
                 raise
             except Exception as raw_error:
                 error = _effective_error(raw_error)

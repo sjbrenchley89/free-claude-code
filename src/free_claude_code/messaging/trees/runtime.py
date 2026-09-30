@@ -1,5 +1,6 @@
 """Atomic runtime aggregate for one messaging conversation tree."""
 
+from __future__ import annotations
 import asyncio
 from copy import deepcopy
 from dataclasses import dataclass

@@ -1,5 +1,6 @@
 """Provider-selected adaptations of native Responses tool representations."""
 
+from __future__ import annotations
 import json
 from collections.abc import Iterable, Mapping
 from copy import deepcopy

@@ -1,5 +1,6 @@
 """Bind resolved endpoints to isolated OpenAI SDK request clients."""
 
+from __future__ import annotations
 import httpx
 import httpx2
 from openai import AsyncOpenAI, Omit

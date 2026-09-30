@@ -6,6 +6,7 @@ inside FCC's ephemeral configuration directory, which is deleted on exit. A
 Hub started with ordinary cline keeps using its own discovery file.
 """
 
+from __future__ import annotations
 import re
 from collections.abc import Sequence
 

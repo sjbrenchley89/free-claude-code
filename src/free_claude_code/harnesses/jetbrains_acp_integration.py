@@ -1,5 +1,6 @@
 """Configure a custom FCC agent using JetBrains' installed Claude ACP adapter."""
 
+from __future__ import annotations
 import json
 import os
 import re
@@ -125,7 +126,7 @@ def _node(
                 if sys.platform == "win32"
                 else 0,
             )
-        except OSError, subprocess.TimeoutExpired:
+        except (OSError, subprocess.TimeoutExpired):
             continue
         actual = _version(result.stdout.strip())
         if result.returncode == 0 and actual is not None and actual >= minimum:
@@ -147,7 +148,7 @@ def _launch(previous: JsonObject) -> tuple[str, list[str]]:
             raise SetupError(_MISSING)
         if package_spec != f"{_PACKAGE}@{version}":
             raise SetupError(_MISSING)
-    except KeyError, ValueError:
+    except (KeyError, ValueError):
         raise SetupError(_MISSING) from None
     previous_args = previous.get("args")
     old_bin = (
@@ -187,7 +188,7 @@ def _launch(previous: JsonObject) -> tuple[str, list[str]]:
             node = _node(root, required, previous)
             if node is not None:
                 return str(node), [str(script), "--hide-claude-auth"]
-        except KeyError, ValueError, OSError:
+        except (KeyError, ValueError, OSError):
             continue
     raise SetupError(_MISSING)
 

@@ -1,5 +1,6 @@
 """Responses object and output item builders."""
 
+from __future__ import annotations
 from typing import Any
 
 

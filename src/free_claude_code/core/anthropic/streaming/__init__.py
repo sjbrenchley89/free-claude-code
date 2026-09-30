@@ -1,5 +1,6 @@
 """Shared Anthropic streaming engine."""
 
+from __future__ import annotations
 from .decoder import AnthropicSSEDecoder
 from .emitter import (
     ANTHROPIC_SSE_RESPONSE_HEADERS,

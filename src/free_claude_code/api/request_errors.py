@@ -1,5 +1,6 @@
 """Shared API request validation and safe error logging."""
 
+from __future__ import annotations
 from collections.abc import Sequence
 from typing import Literal
 

@@ -1,5 +1,6 @@
 """Request-scoped subscription credentials for the Codex backend."""
 
+from __future__ import annotations
 from collections.abc import Mapping
 
 from free_claude_code.core.failures import ExecutionFailure, FailureKind

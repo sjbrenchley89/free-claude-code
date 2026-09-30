@@ -1,5 +1,6 @@
 """Platform-neutral voice note helpers."""
 
+from __future__ import annotations
 import asyncio
 from collections.abc import Awaitable, Callable
 from contextvars import ContextVar
@@ -307,7 +308,7 @@ class PendingVoiceRegistry:
         for task in tasks:
             try:
                 await task
-            except asyncio.CancelledError, Exception:
+            except (asyncio.CancelledError, Exception):
                 continue
             except BaseException as error:
                 fatal_error = fatal_error or error

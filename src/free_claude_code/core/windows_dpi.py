@@ -1,5 +1,6 @@
 """Windows scaling setup shared by native UI entrypoints."""
 
+from __future__ import annotations
 import ctypes
 import sys
 

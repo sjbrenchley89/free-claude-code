@@ -1,5 +1,6 @@
 """Installed DeepSeek Harness launcher with an FCC connection patch."""
 
+from __future__ import annotations
 import re
 from collections.abc import Sequence
 

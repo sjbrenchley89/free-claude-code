@@ -1,5 +1,6 @@
 """NVIDIA NIM retry-body downgrade helpers."""
 
+from __future__ import annotations
 from collections.abc import Callable
 from copy import deepcopy
 from typing import Any

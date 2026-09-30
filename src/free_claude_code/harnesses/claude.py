@@ -1,5 +1,6 @@
 """Shared Claude Code environment policy for FCC client surfaces."""
 
+from __future__ import annotations
 from collections.abc import Mapping
 
 from free_claude_code.harnesses.environment import client_environment

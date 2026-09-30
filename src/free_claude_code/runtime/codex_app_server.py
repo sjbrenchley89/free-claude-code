@@ -1,5 +1,6 @@
 """Owned Codex app-server processes over bidirectional stdio JSONL."""
 
+from __future__ import annotations
 import asyncio
 import hashlib
 import json

@@ -1,5 +1,6 @@
 """Recognize Groq token-limit rejections and correct combined TPM output budgets."""
 
+from __future__ import annotations
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass

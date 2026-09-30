@@ -1,5 +1,6 @@
 """Read and update the standard global Claude Code settings for VS Code."""
 
+from __future__ import annotations
 import json
 import os
 import sys

@@ -1,5 +1,6 @@
 """Shared local-only security boundary for Admin product surfaces."""
 
+from __future__ import annotations
 import ipaddress
 from urllib.parse import urlsplit
 

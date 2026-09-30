@@ -1,5 +1,6 @@
 """Mistral La Plateforme reasoning compatibility helpers."""
 
+from __future__ import annotations
 import json
 import sys
 from collections.abc import AsyncIterator, Mapping, Sequence

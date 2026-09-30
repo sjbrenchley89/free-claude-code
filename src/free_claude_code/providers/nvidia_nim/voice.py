@@ -1,5 +1,6 @@
 """NVIDIA NIM / Riva offline ASR for voice notes (provider-owned transport)."""
 
+from __future__ import annotations
 import asyncio
 from pathlib import Path
 

@@ -1,5 +1,6 @@
 """Normalize native MiniMax-M3 tool markup exposed by NVIDIA NIM."""
 
+from __future__ import annotations
 import json
 import uuid
 from collections.abc import AsyncIterator, Mapping, Sequence

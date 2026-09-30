@@ -1,5 +1,6 @@
 """Anthropic server-tool block types shared by decoders and formatters."""
 
+from __future__ import annotations
 from typing import Final
 
 SERVER_TOOL_USE: Final = "server_tool_use"

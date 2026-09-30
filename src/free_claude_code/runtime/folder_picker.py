@@ -1,5 +1,6 @@
 """Own the native folder dialog for one client request at a time."""
 
+from __future__ import annotations
 import asyncio
 import json
 import os

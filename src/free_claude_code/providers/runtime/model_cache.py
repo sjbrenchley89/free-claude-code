@@ -1,5 +1,6 @@
 """Provider model-list metadata cache."""
 
+from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import replace
 

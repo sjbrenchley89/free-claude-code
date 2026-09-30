@@ -1,5 +1,6 @@
 """Runtime-owned queued delivery for one messaging platform."""
 
+from __future__ import annotations
 import asyncio
 from collections import deque
 from collections.abc import Awaitable, Callable

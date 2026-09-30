@@ -1,5 +1,6 @@
 """Recognize the narrow Anthropic web-tool requests FCC can execute locally."""
 
+from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass

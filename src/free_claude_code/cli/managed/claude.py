@@ -1,5 +1,6 @@
 """Managed Claude Code task command, environment, and stdout parsing."""
 
+from __future__ import annotations
 import json
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field

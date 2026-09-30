@@ -1,5 +1,6 @@
 """Connect native Codex clients through their shared TOML configuration."""
 
+from __future__ import annotations
 import os
 from pathlib import Path
 

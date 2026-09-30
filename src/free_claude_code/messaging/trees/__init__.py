@@ -1,5 +1,6 @@
 """Internal messaging tree package facade."""
 
+from __future__ import annotations
 from .graph import normalize_tree_snapshot
 from .identity import TreeIdentity
 from .manager import TreeQueueManager

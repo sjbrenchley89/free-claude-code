@@ -1,5 +1,6 @@
 """Present native Anthropic Messages events as one Responses lifecycle."""
 
+from __future__ import annotations
 import json
 import time
 import uuid

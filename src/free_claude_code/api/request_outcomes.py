@@ -1,5 +1,6 @@
 """Log one final inference outcome after HTTP delivery and owned cleanup."""
 
+from __future__ import annotations
 import asyncio
 import codecs
 from time import monotonic

@@ -5,6 +5,7 @@ management endpoints requiring a different key cannot validate inference keys.
 Failure defaults to unverified; rejection requires provider-specific evidence.
 """
 
+from __future__ import annotations
 import asyncio
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
@@ -277,7 +278,7 @@ async def _check_one(settings: Settings, key: str, probe: _Probe) -> CredentialC
             ) as client:
                 response = await client.get(url, headers=headers)
                 return _interpret(key, probe, response)
-    except TimeoutError, httpx.RequestError, UnicodeError:
+    except (TimeoutError, httpx.RequestError, UnicodeError):
         return _unverified(key, "Could not reach the provider to verify this key.")
 
 

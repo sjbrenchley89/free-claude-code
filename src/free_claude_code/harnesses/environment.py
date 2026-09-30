@@ -1,5 +1,6 @@
 """Shared child-only environment setup for native clients."""
 
+from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from urllib.parse import urlsplit
 

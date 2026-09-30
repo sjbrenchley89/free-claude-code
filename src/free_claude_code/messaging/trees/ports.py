@@ -1,5 +1,6 @@
 """Durable messaging operations implemented by the runtime storage adapter."""
 
+from __future__ import annotations
 from typing import Protocol
 
 from ..models import MessageScope

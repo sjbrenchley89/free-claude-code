@@ -1,5 +1,6 @@
 """Shared cleanup reporting for runtime resource owners."""
 
+from __future__ import annotations
 from collections.abc import Awaitable
 
 from loguru import logger

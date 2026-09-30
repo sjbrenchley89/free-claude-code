@@ -1,5 +1,6 @@
 """Mistral La Plateforme provider implementation (OpenAI-compatible chat completions)."""
 
+from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 

@@ -1,5 +1,6 @@
 """Typed effective-value state shared by Admin configuration services."""
 
+from __future__ import annotations
 from dataclasses import dataclass
 
 from free_claude_code.core.json_types import JsonValue

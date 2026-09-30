@@ -1,5 +1,6 @@
 """Process-local OpenCode v2 configuration for FCC model routing."""
 
+from __future__ import annotations
 from dataclasses import dataclass
 
 from free_claude_code.application.model_catalog import (

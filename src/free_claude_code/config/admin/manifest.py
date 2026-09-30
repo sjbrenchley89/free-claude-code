@@ -1,5 +1,6 @@
 """Admin configuration manifest."""
 
+from __future__ import annotations
 from collections.abc import Iterable
 
 from free_claude_code.config.provider_catalog import PROVIDER_CATALOG

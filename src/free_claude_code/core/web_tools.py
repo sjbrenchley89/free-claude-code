@@ -1,5 +1,6 @@
 """Completed web results shared by application operations and wire formatters."""
 
+from __future__ import annotations
 from dataclasses import dataclass
 
 

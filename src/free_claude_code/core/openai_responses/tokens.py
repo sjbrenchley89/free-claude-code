@@ -1,5 +1,6 @@
 """Best-effort token estimates for native Responses requests."""
 
+from __future__ import annotations
 import json
 from collections.abc import Iterator, Mapping, Sequence
 from io import StringIO

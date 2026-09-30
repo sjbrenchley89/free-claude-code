@@ -1,5 +1,6 @@
 """Server-owned coding sessions, independent of HTTP and browser lifetimes."""
 
+from __future__ import annotations
 import asyncio
 import uuid
 from collections.abc import AsyncIterator, Callable, Coroutine, Sequence
@@ -295,7 +296,7 @@ class CodeService:
             folder = Path(cwd).expanduser().resolve(strict=True)
             if not folder.is_dir():
                 raise ValueError
-        except OSError, ValueError, RuntimeError:
+        except (OSError, ValueError, RuntimeError):
             raise CodeValidationError(
                 "Choose an existing folder on the FCC computer."
             ) from None
@@ -978,7 +979,7 @@ class CodeService:
                 items=progress.items,
                 prompts=progress.prompts,
             )
-        except CodeConflictError, CodeNotFoundError:
+        except (CodeConflictError, CodeNotFoundError):
             raise
         except Exception as exc:
             self._mark_storage_failed(owner, "save_progress", exc)
@@ -1178,7 +1179,7 @@ def _validate_id(value: str) -> None:
         parsed = uuid.UUID(value)
         if str(parsed) != value or parsed.version != 4:
             raise ValueError
-    except ValueError, AttributeError:
+    except (ValueError, AttributeError):
         raise CodeValidationError("Invalid session or command ID.") from None
 
 

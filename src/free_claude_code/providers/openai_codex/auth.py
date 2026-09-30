@@ -1,5 +1,6 @@
 """FCC-owned ChatGPT credential lifecycle."""
 
+from __future__ import annotations
 import asyncio
 import base64
 import json
@@ -150,7 +151,7 @@ def saved_connection_state() -> str:
             if _read_saved_credentials(openai_auth_path())
             else "disconnected"
         )
-    except OSError, ValueError:
+    except (OSError, ValueError):
         return "unavailable"
 
 

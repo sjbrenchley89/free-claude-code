@@ -1,5 +1,6 @@
 """Shared defaults used by config models and provider adapters."""
 
+from __future__ import annotations
 DEFAULT_MODEL = "nvidia_nim/nvidia/nemotron-3-super-120b-a12b"
 
 # Client context allocation when the provider reports no model limit.

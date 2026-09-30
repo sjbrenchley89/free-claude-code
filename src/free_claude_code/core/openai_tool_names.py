@@ -1,5 +1,6 @@
 """Reversible tool names for OpenAI-compatible protocol boundaries."""
 
+from __future__ import annotations
 import hashlib
 import re
 from collections.abc import Iterable

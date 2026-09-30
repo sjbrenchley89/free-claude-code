@@ -1,5 +1,6 @@
 """Message and tool format converters."""
 
+from __future__ import annotations
 import json
 from copy import deepcopy
 from dataclasses import dataclass, field

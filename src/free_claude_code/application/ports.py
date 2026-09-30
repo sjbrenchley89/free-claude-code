@@ -1,5 +1,6 @@
 """Typed capabilities consumed by application use cases."""
 
+from __future__ import annotations
 from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
 from dataclasses import dataclass, replace
 from typing import Protocol

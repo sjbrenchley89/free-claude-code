@@ -1,5 +1,6 @@
 """Ingress-owned HTTP request correlation."""
 
+from __future__ import annotations
 import uuid
 
 from fastapi import Request, Response

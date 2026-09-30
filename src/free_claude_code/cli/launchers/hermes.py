@@ -1,5 +1,6 @@
 """Installed Hermes launcher with a native managed provider overlay."""
 
+from __future__ import annotations
 import json
 import os
 import re

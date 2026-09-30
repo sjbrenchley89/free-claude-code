@@ -1,5 +1,6 @@
 """Process-local DeepSeek Harness configuration for FCC model routing."""
 
+from __future__ import annotations
 import math
 from pathlib import Path
 

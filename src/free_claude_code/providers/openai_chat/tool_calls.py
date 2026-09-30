@@ -1,5 +1,6 @@
 """OpenAI-chat tool-call assembly helpers."""
 
+from __future__ import annotations
 import json
 import uuid
 from collections.abc import Callable, Iterable, Iterator, Mapping

@@ -1,5 +1,6 @@
 """Copilot subscription models dispatched through FCC's three HTTP egresses."""
 
+from __future__ import annotations
 import asyncio
 import sys
 from collections.abc import AsyncIterator, Mapping

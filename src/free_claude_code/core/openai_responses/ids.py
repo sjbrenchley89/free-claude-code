@@ -1,5 +1,6 @@
 """Identifier helpers for OpenAI Responses payloads."""
 
+from __future__ import annotations
 import uuid
 from typing import Literal
 

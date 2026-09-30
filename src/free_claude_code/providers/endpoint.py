@@ -1,5 +1,6 @@
 """Request-scoped endpoint resolution borrowed from provider account owners."""
 
+from __future__ import annotations
 from free_claude_code.providers.endpoint_types import EndpointContext, HttpEndpoint
 
 

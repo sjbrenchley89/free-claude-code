@@ -1,5 +1,6 @@
 """Incremental framing for Anthropic-compatible SSE streams."""
 
+from __future__ import annotations
 import re
 
 from ..stream_contracts import SSEEvent, parse_sse_text

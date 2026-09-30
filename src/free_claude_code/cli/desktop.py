@@ -1,5 +1,6 @@
 """Platform-neutral lifecycle for the FCC desktop shell."""
 
+from __future__ import annotations
 import threading
 from collections.abc import Callable
 from typing import Protocol

@@ -1,5 +1,6 @@
 """Canonical installed Free Claude Code package version."""
 
+from __future__ import annotations
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as distribution_version
 

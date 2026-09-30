@@ -1,5 +1,6 @@
 """Exclusive reasoning encoders for Google OpenAI-compatible endpoints."""
 
+from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, cast
 

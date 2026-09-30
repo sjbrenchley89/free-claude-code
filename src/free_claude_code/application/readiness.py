@@ -1,5 +1,6 @@
 """Wait budgets for initialization owned by a longer-lived service."""
 
+from __future__ import annotations
 import asyncio
 
 from .errors import ApplicationUnavailableError

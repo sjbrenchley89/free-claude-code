@@ -1,5 +1,6 @@
 """Shared filesystem paths for Free Claude Code configuration."""
 
+from __future__ import annotations
 from pathlib import Path
 
 FCC_CONFIG_DIRNAME = ".fcc"

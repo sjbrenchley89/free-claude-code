@@ -1,5 +1,6 @@
 """Concurrent readers and exclusive writers with preference for queued writes."""
 
+from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager

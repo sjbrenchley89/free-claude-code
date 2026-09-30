@@ -1,5 +1,6 @@
 """Pinned official Copilot SDK boundary; never run SDK agent turns."""
 
+from __future__ import annotations
 import asyncio
 import re
 import tempfile
@@ -446,7 +447,7 @@ def _endpoint(endpoint: ProviderEndpoint, model_id: str) -> CopilotEndpoint:
             raise CopilotUnavailable("Copilot returned invalid endpoint headers.")
         try:
             headers[key] = value
-        except UnicodeError, ValueError:
+        except (UnicodeError, ValueError):
             raise CopilotUnavailable(
                 "Copilot returned invalid endpoint headers."
             ) from None
@@ -464,7 +465,7 @@ def _endpoint(endpoint: ProviderEndpoint, model_id: str) -> CopilotEndpoint:
             )
         try:
             headers[token.header] = token.token
-        except UnicodeError, ValueError:
+        except (UnicodeError, ValueError):
             raise CopilotUnavailable(
                 "Copilot returned an invalid session token."
             ) from None

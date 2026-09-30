@@ -1,8 +1,15 @@
 """Provider model-list response parsing helpers."""
 
+from __future__ import annotations
+import sys
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import replace
-from typing import Any, TypeIs
+from typing import Any
+
+if sys.version_info >= (3, 13):
+    from typing import TypeIs
+else:
+    from typing_extensions import TypeIs
 
 from free_claude_code.application.model_metadata import (
     ProviderModelInfo as _ProviderModelInfo,

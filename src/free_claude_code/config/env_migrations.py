@@ -1,5 +1,6 @@
 """One-time consolidation of legacy FCC dotenv state."""
 
+from __future__ import annotations
 import os
 import re
 import uuid

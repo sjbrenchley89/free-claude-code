@@ -1,5 +1,6 @@
 """ASGI lifespan adapter for the application runtime owner."""
 
+from __future__ import annotations
 from loguru import logger
 from starlette.types import ASGIApp, Receive, Scope, Send
 

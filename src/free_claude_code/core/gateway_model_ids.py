@@ -1,5 +1,6 @@
 """Gateway-safe model ID encoding shared by API and CLI adapters."""
 
+from __future__ import annotations
 from dataclasses import dataclass
 
 GATEWAY_MODEL_ID_PREFIX = "anthropic"
@@ -45,7 +46,7 @@ def decode_gateway_model_id(model_name: str) -> DecodedGatewayModelId | None:
     if prefix in {DESKTOP_MODEL_PREFIX, DESKTOP_NO_THINKING_PREFIX}:
         try:
             decoded = bytes.fromhex(remainder).decode("utf-8")
-        except ValueError, UnicodeError:
+        except (ValueError, UnicodeError):
             raise ValueError("Invalid Desktop model ID") from None
         if not remainder or decoded.encode("utf-8").hex() != remainder:
             raise ValueError("Invalid Desktop model ID")

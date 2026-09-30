@@ -4,6 +4,7 @@ Detects quota checks, title generation, prefix detection, safety classifier,
 suggestion mode, and filepath extraction requests to enable targeted handling.
 """
 
+from __future__ import annotations
 from free_claude_code.core.anthropic import (
     Message,
     MessagesRequest,

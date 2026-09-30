@@ -1,5 +1,6 @@
 """Managed and legacy dotenv discovery helpers."""
 
+from __future__ import annotations
 import os
 from collections.abc import Mapping
 from io import StringIO

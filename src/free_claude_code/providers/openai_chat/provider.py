@@ -1,5 +1,6 @@
 """Provider identity, HTTP resource ownership, and model discovery."""
 
+from __future__ import annotations
 from collections.abc import AsyncIterator, Mapping
 from dataclasses import replace
 from typing import Any

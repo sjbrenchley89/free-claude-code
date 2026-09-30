@@ -1,5 +1,6 @@
 """Official native Copilot device login; FCC never handles the resulting token."""
 
+from __future__ import annotations
 import asyncio
 import os
 import re

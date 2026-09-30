@@ -1,5 +1,6 @@
 """Portable Unicode exclusions for Claude tool parameter schemas."""
 
+from __future__ import annotations
 import re
 import unicodedata
 from functools import cache
@@ -133,7 +134,7 @@ def _translate_pattern(pattern: str) -> str:
     translated = "".join(parts)
     try:
         re.compile(translated)
-    except re.error, OverflowError, RecursionError:
+    except (re.error, OverflowError, RecursionError):
         return pattern
     return translated
 

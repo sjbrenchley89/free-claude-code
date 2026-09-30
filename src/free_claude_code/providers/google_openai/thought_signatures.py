@@ -1,5 +1,6 @@
 """Google thought-signature replay for OpenAI-compatible tool calls."""
 
+from __future__ import annotations
 from copy import deepcopy
 from typing import Any
 

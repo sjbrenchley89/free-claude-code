@@ -1,5 +1,6 @@
 """Lightweight entry points for installed Free Claude Code commands."""
 
+from __future__ import annotations
 import sys
 from collections.abc import Sequence
 

@@ -1,5 +1,6 @@
 """Retained listening sockets shared by terminal and desktop supervision."""
 
+from __future__ import annotations
 import errno
 import os
 import socket

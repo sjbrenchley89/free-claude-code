@@ -1,5 +1,6 @@
 """Anthropic token-count API product flow."""
 
+from __future__ import annotations
 from fastapi import HTTPException
 from loguru import logger
 

@@ -1,5 +1,6 @@
 """Version 3: optional model context usage for Code sessions."""
 
+from __future__ import annotations
 import sqlite3
 
 

@@ -1,5 +1,6 @@
 """Installed Aider launcher using native model settings for FCC routing."""
 
+from __future__ import annotations
 from collections.abc import Sequence
 
 from free_claude_code.harnesses.environment import client_environment

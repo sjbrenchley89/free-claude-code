@@ -1,5 +1,6 @@
 """Admin response cache policy."""
 
+from __future__ import annotations
 from fastapi import Response
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send

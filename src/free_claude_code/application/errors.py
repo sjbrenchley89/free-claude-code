@@ -1,5 +1,6 @@
 """Deterministic application and readiness errors."""
 
+from __future__ import annotations
 from collections.abc import Iterable
 
 from free_claude_code.core.failures import FailureKind

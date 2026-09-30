@@ -1,5 +1,6 @@
 """Inbound messaging turn intake and queue admission."""
 
+from __future__ import annotations
 from collections.abc import Awaitable, Callable
 
 from loguru import logger

@@ -1,5 +1,6 @@
 """Catalog-derived Admin provider fields."""
 
+from __future__ import annotations
 from dataclasses import replace
 from typing import TypedDict
 

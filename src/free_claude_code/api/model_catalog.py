@@ -1,5 +1,6 @@
 """Model-list response construction for FCC clients."""
 
+from __future__ import annotations
 import math
 from enum import StrEnum
 from typing import Literal

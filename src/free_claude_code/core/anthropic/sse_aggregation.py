@@ -7,6 +7,7 @@ shape the real Anthropic API returns for a non-streaming ``messages.create()``
 call.
 """
 
+from __future__ import annotations
 import json
 import uuid
 from collections.abc import AsyncIterator

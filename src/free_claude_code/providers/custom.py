@@ -1,5 +1,6 @@
 """Custom endpoint resource ownership using FCC's existing wire transports."""
 
+from __future__ import annotations
 from collections.abc import AsyncIterator, Mapping
 
 import httpx

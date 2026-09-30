@@ -4,6 +4,7 @@ Each handler returns a MessagesResponse if the request matches and the
 optimization is enabled, otherwise None.
 """
 
+from __future__ import annotations
 import uuid
 
 from loguru import logger

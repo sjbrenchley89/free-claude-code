@@ -1,5 +1,6 @@
 """Hide structured provider reasoning from Claude's classifier response."""
 
+from __future__ import annotations
 import sys
 from collections.abc import AsyncIterator
 

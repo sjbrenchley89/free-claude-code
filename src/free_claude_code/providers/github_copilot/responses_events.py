@@ -1,5 +1,6 @@
 """Correlate Copilot's rotating opaque Responses IDs within one attempt."""
 
+from __future__ import annotations
 from copy import deepcopy
 
 from free_claude_code.core.json_types import JsonObject

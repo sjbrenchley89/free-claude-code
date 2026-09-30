@@ -1,5 +1,6 @@
 """Provider model-list discovery and background refresh."""
 
+from __future__ import annotations
 import httpx
 
 from free_claude_code.application.errors import ApplicationUnavailableError

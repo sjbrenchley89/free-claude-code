@@ -1,5 +1,6 @@
 """Keyed custom-provider edits merged into a fresh configuration snapshot."""
 
+from __future__ import annotations
 from typing import Literal
 from uuid import uuid4
 

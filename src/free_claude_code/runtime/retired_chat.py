@@ -1,5 +1,6 @@
 """Remove saved data belonging to the retired Admin Chat Sessions feature."""
 
+from __future__ import annotations
 from loguru import logger
 
 from free_claude_code.config import paths

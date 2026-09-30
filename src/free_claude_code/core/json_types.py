@@ -1,5 +1,6 @@
 """Shared JSON value vocabulary for wire and persistence boundaries."""
 
+from __future__ import annotations
 from collections.abc import Mapping, Sequence
 
 type JsonScalar = bool | int | float | str | None

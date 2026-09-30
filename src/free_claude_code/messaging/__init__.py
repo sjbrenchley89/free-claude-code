@@ -1,5 +1,6 @@
 """Platform-agnostic messaging layer."""
 
+from __future__ import annotations
 from .managed_protocols import (
     ManagedClaudeSessionManagerProtocol,
     ManagedClaudeSessionProtocol,

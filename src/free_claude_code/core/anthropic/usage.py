@@ -1,6 +1,7 @@
 """Anthropic terminal usage accounting helpers."""
 
 
+from __future__ import annotations
 def anthropic_input_usage_fields(
     total_tokens: int | None,
     *,

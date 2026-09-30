@@ -1,5 +1,6 @@
 """Google AI Studio Gemini provider (OpenAI-compatible chat completions)."""
 
+from __future__ import annotations
 from free_claude_code.core.anthropic import ReasoningReplayMode
 from free_claude_code.providers.admission import ProviderAdmissionController
 from free_claude_code.providers.base import ProviderConfig

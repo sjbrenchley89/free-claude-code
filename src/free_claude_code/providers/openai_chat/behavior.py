@@ -1,5 +1,6 @@
 """Provider-specific Chat adaptation, independent of HTTP resource ownership."""
 
+from __future__ import annotations
 from collections.abc import Iterator, Mapping
 from typing import Any
 

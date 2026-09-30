@@ -1,5 +1,6 @@
 """Request-scoped diagnostic fields shared by routing and HTTP delivery."""
 
+from __future__ import annotations
 from contextvars import ContextVar
 from dataclasses import dataclass
 

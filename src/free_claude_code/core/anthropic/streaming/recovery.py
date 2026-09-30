@@ -1,5 +1,6 @@
 """Pure Anthropic continuation and tool-repair transformations."""
 
+from __future__ import annotations
 import json
 from copy import deepcopy
 from dataclasses import dataclass

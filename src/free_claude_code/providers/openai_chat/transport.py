@@ -1,5 +1,6 @@
 """Shared Chat Completions transport and per-request stream execution."""
 
+from __future__ import annotations
 import asyncio
 import sys
 import uuid
@@ -991,7 +992,7 @@ class _OpenAIChatStreamRunner:
                         yield out_event
                 break
 
-            except asyncio.CancelledError, GeneratorExit:
+            except (asyncio.CancelledError, GeneratorExit):
                 raise
             except Exception as error:
                 if scope is not None:

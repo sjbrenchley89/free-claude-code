@@ -1,5 +1,6 @@
 """Google Vertex AI provider using the OpenAI-compatible Chat Completions API."""
 
+from __future__ import annotations
 from dataclasses import replace
 from typing import Any
 

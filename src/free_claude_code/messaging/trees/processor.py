@@ -1,5 +1,6 @@
 """Task execution for claims returned by messaging tree aggregates."""
 
+from __future__ import annotations
 import asyncio
 import contextlib
 from collections.abc import Awaitable, Callable

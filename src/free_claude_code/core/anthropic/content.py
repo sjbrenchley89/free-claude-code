@@ -1,5 +1,6 @@
 """Content block helpers for Anthropic-compatible payloads."""
 
+from __future__ import annotations
 from typing import Any
 
 

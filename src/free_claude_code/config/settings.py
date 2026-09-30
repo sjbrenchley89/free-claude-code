@@ -1,5 +1,6 @@
 """Pure, validated application settings schema."""
 
+from __future__ import annotations
 from ipaddress import ip_address
 from typing import Annotated
 

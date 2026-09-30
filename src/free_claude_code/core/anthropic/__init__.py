@@ -1,5 +1,6 @@
 """Anthropic protocol helpers shared across API, providers, and integrations."""
 
+from __future__ import annotations
 from .content import extract_text_from_content, get_block_attr, get_block_type
 from .conversion import (
     AnthropicToOpenAIConverter,

@@ -1,5 +1,6 @@
 """Worker boundary for managed configuration; runtime state stays on the loop."""
 
+from __future__ import annotations
 from collections.abc import Mapping
 
 from anyio import CapacityLimiter, to_thread

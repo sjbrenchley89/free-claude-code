@@ -1,5 +1,6 @@
 """Outbound HTTP for web_search / web_fetch with operation-scoped resources."""
 
+from __future__ import annotations
 import asyncio
 import socket
 from collections.abc import AsyncIterator

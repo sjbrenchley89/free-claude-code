@@ -1,5 +1,6 @@
 """Conversation rules and staged transcript values, without runtime I/O."""
 
+from __future__ import annotations
 import uuid
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass

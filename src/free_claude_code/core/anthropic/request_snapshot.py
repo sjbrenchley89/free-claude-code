@@ -1,5 +1,6 @@
 """Trace-safe snapshots of Anthropic protocol requests."""
 
+from __future__ import annotations
 from typing import Any
 
 from free_claude_code.core.trace import sanitize_trace_value

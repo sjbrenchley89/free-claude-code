@@ -1,5 +1,6 @@
 """Neutral capability values shared by model discovery and client catalogs."""
 
+from __future__ import annotations
 from enum import StrEnum
 
 

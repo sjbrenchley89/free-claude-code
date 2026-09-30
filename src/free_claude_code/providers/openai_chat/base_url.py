@@ -1,6 +1,7 @@
 """OpenAI-compatible API base URL policy."""
 
 
+from __future__ import annotations
 def openai_v1_base_url(base_url: str) -> str:
     """Return the canonical ``/v1`` API base for a server root or API base."""
     normalized = base_url.rstrip("/")

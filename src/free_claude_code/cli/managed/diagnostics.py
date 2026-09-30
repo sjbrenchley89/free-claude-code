@@ -1,5 +1,6 @@
 """Managed Claude Code diagnostic classification."""
 
+from __future__ import annotations
 from dataclasses import dataclass
 
 _BENIGN_STDERR_MARKERS = ("claude.ai connectors are disabled",)

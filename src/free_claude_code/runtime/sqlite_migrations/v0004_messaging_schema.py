@@ -1,5 +1,6 @@
 """Relational messaging history and the retired JSON import receipt."""
 
+from __future__ import annotations
 import sqlite3
 
 

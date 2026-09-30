@@ -1,5 +1,6 @@
 """Rollback state for a manager-owned durable messaging transition."""
 
+from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..models import MessageScope

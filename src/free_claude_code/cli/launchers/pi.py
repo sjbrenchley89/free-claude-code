@@ -1,5 +1,6 @@
 """Installed Pi launcher using the bundled FCC provider extension."""
 
+from __future__ import annotations
 import re
 import sys
 from collections.abc import Sequence

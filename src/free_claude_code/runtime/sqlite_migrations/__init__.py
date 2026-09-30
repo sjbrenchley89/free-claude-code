@@ -5,6 +5,7 @@ owns transactions and user_version. Migrations use explicit execute statements,
 never executescript, and must not import mutable domain models or serializers.
 """
 
+from __future__ import annotations
 import sqlite3
 from collections.abc import Callable
 

@@ -1,5 +1,6 @@
 """Validation helpers for OpenAI-chat ``extra_body`` passthrough."""
 
+from __future__ import annotations
 from typing import Any
 
 CANONICAL_OPENAI_CHAT_BODY_KEYS = frozenset(

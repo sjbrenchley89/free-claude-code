@@ -1,5 +1,6 @@
 """Local Admin commands, snapshots and SSE for coding conversations."""
 
+from __future__ import annotations
 import base64
 import json
 from collections.abc import AsyncIterator, Mapping
@@ -368,7 +369,7 @@ def _decode_cursor(cursor: str | None) -> tuple[int, str] | None:
         ):
             raise ValueError
         return value[0], value[1]
-    except ValueError, UnicodeError:
+    except (ValueError, UnicodeError):
         raise CodeValidationError("Invalid session page cursor.") from None
 
 
@@ -382,5 +383,5 @@ def _decode_item_cursor(cursor: str) -> tuple[int, int]:
         ):
             raise ValueError
         return value[0], value[1]
-    except ValueError, UnicodeError:
+    except (ValueError, UnicodeError):
         raise CodeValidationError("Invalid transcript page cursor.") from None

@@ -1,5 +1,6 @@
 """Provider-owned SDK classification and retry qualification."""
 
+from __future__ import annotations
 import json
 import ssl
 from collections.abc import Callable, Mapping

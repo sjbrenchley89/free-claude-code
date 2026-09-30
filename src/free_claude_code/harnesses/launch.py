@@ -1,5 +1,6 @@
 """Native launch descriptions; execution belongs to each caller."""
 
+from __future__ import annotations
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 

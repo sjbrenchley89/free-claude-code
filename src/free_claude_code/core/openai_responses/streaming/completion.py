@@ -1,5 +1,6 @@
 """Block finalization for OpenAI Responses streams."""
 
+from __future__ import annotations
 from ..items import encrypted_reasoning_item, message_item, reasoning_item
 from ..tools import (
     custom_tool_input_text_from_arguments,

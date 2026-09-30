@@ -11,6 +11,7 @@ retry once and succeed. The provider also remembers the learned cap per model
 so later requests clamp proactively instead of paying the 400 every time.
 """
 
+from __future__ import annotations
 import re
 from typing import Any
 

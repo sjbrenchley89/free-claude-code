@@ -1,5 +1,6 @@
 """OpenRouter-format structured reasoning replay and stream conversion."""
 
+from __future__ import annotations
 from collections.abc import Iterator, Mapping, Sequence
 from copy import deepcopy
 from dataclasses import dataclass, field

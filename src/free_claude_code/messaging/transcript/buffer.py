@@ -1,5 +1,6 @@
 """Transcript event application and open-block tracking."""
 
+from __future__ import annotations
 from typing import Any
 
 from .context import RenderCtx

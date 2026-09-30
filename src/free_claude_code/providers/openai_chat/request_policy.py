@@ -1,5 +1,6 @@
 """Request-body policy for OpenAI-compatible chat providers."""
 
+from __future__ import annotations
 from collections.abc import Callable, Iterable
 from copy import deepcopy
 from dataclasses import dataclass, field

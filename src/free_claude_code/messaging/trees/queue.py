@@ -1,5 +1,6 @@
 """FIFO queue state for one messaging conversation tree."""
 
+from __future__ import annotations
 from collections import deque
 
 

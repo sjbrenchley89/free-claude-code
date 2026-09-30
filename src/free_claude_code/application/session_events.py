@@ -1,5 +1,6 @@
 """Bounded in-process fan-out for observable session state changes."""
 
+from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator
 from dataclasses import dataclass

@@ -1,5 +1,6 @@
 """Output ledger for OpenAI Responses streaming assembly."""
 
+from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 

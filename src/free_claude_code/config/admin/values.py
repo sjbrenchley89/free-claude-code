@@ -1,5 +1,6 @@
 """Admin config value state and API response assembly."""
 
+from __future__ import annotations
 from enum import Enum
 
 from free_claude_code.config.custom_providers import REASONING_FORMATS

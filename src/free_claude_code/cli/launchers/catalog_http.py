@@ -1,5 +1,6 @@
 """Authenticated local catalog acquisition for terminal launchers."""
 
+from __future__ import annotations
 import json
 from collections.abc import Mapping
 from typing import Literal
@@ -121,7 +122,7 @@ def _input_modalities(value: object) -> frozenset[ModelInputModality] | None:
         return None
     try:
         modalities = frozenset(ModelInputModality(item) for item in value)
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         return None
     if ModelInputModality.TEXT not in modalities:
         return None

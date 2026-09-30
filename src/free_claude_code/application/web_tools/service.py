@@ -1,5 +1,6 @@
 """Application workflow for supported local Anthropic web-tool requests."""
 
+from __future__ import annotations
 import asyncio
 import sys
 import uuid

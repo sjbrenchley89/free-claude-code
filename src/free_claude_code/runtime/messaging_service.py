@@ -1,5 +1,6 @@
 """Own messaging startup, delivery resources, and their ordered cleanup gates."""
 
+from __future__ import annotations
 import asyncio
 import importlib
 import os

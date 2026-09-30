@@ -1,5 +1,6 @@
 """One setup, execution, and cleanup path for installed native harnesses."""
 
+from __future__ import annotations
 import os
 import re
 import secrets
@@ -80,7 +81,7 @@ def _check_native(
         )
         if result.returncode == 0 and check.accepts(result.stdout):
             return
-    except OSError, subprocess.TimeoutExpired:
+    except (OSError, subprocess.TimeoutExpired):
         pass
     message = check.failure_message
     if install_hint:

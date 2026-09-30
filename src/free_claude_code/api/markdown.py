@@ -1,5 +1,6 @@
 """Safe Markdown rendering for locally stored model-authored prose."""
 
+from __future__ import annotations
 from collections.abc import Sequence
 from html import escape
 from urllib.parse import urlsplit

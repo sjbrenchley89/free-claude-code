@@ -1,5 +1,6 @@
 """Streaming parser for provider-emitted thinking tags."""
 
+from __future__ import annotations
 from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import Enum

@@ -1,5 +1,6 @@
 """Vertex AI service and OpenAI-compatible endpoint construction."""
 
+from __future__ import annotations
 import re
 from urllib.parse import quote
 

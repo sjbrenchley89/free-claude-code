@@ -1,5 +1,6 @@
 """Model Studio chat transport with native DashScope model discovery."""
 
+from __future__ import annotations
 from typing import Any
 from urllib.parse import urljoin
 

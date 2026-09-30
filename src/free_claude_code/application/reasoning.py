@@ -1,5 +1,6 @@
 """Resolve client reasoning input and FCC configuration exactly once."""
 
+from __future__ import annotations
 from collections.abc import Mapping
 
 from free_claude_code.config.reasoning import ReasoningPreference

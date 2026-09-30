@@ -1,5 +1,6 @@
 """Managed Claude Code subprocess session."""
 
+from __future__ import annotations
 import asyncio
 import os
 import subprocess

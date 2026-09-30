@@ -1,5 +1,6 @@
 """Provider connection provenance and precise historical request corrections."""
 
+from __future__ import annotations
 import hashlib
 import json
 import re

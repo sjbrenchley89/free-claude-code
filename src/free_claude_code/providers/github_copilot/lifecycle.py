@@ -1,5 +1,6 @@
 """Drain Copilot-owned work before propagating caller cancellation."""
 
+from __future__ import annotations
 import asyncio
 
 

@@ -1,5 +1,6 @@
 """Immutable Copilot metadata and the narrow runtime boundary."""
 
+from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Protocol

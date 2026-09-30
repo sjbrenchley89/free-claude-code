@@ -1,5 +1,6 @@
 """Installed Muse Code launcher with a native FCC connection."""
 
+from __future__ import annotations
 import re
 from collections.abc import Sequence
 

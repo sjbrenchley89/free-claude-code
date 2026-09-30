@@ -1,5 +1,6 @@
 """Typed dependency surface for messaging slash commands."""
 
+from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 

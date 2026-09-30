@@ -1,5 +1,6 @@
 """Shared queued delivery helper for messaging platforms."""
 
+from __future__ import annotations
 import asyncio
 import hashlib
 from collections.abc import Awaitable, Callable

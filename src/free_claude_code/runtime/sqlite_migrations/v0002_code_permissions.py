@@ -1,5 +1,6 @@
 """Version 2: persisted permission mode and original native defaults."""
 
+from __future__ import annotations
 import sqlite3
 
 

@@ -6,6 +6,7 @@ sanitized credential keys (e.g. ``api_key``, ``authorization``). The default
 INFO log level excludes these detailed request traces.
 """
 
+from __future__ import annotations
 import asyncio
 import sys
 from collections.abc import AsyncGenerator, AsyncIterator, Callable, Mapping

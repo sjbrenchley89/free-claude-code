@@ -4,6 +4,7 @@ This parser emits an ordered stream of low-level events suitable for building a
 Claude Code-like transcript in messaging UIs.
 """
 
+from __future__ import annotations
 from typing import Any
 
 from loguru import logger

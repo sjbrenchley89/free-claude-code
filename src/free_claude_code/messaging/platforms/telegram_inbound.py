@@ -1,5 +1,6 @@
 """Telegram inbound event normalization."""
 
+from __future__ import annotations
 from loguru import logger
 from telegram import Update
 from telegram.ext import ContextTypes

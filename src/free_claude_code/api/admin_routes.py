@@ -1,5 +1,6 @@
 """Local admin UI routes and APIs."""
 
+from __future__ import annotations
 from collections.abc import Awaitable, Callable, Mapping
 from pathlib import Path
 

@@ -1,5 +1,6 @@
 """pystray adapter for the Windows tray and macOS menu bar."""
 
+from __future__ import annotations
 from collections.abc import Callable
 from io import BytesIO
 

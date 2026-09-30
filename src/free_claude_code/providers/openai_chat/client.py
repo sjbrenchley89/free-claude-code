@@ -1,5 +1,6 @@
 """SDK client construction for Chat provider resource owners."""
 
+from __future__ import annotations
 from collections.abc import Awaitable, Callable, Mapping
 
 import httpx2

@@ -1,5 +1,6 @@
 """FastAPI route handlers."""
 
+from __future__ import annotations
 from collections.abc import Mapping
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response

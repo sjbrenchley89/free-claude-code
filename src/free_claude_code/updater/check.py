@@ -1,5 +1,6 @@
 """Standalone version preflight for the native update launchers."""
 
+from __future__ import annotations
 import sys
 from importlib.metadata import PackageNotFoundError, version
 

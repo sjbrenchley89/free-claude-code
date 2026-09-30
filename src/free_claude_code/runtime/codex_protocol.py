@@ -1,5 +1,6 @@
 """Codex app-server v2 item and interactive-request projection."""
 
+from __future__ import annotations
 import json
 import math
 from dataclasses import dataclass, field

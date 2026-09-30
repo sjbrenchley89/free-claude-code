@@ -1,5 +1,6 @@
 """Anthropic representation of completed local web-tool operations."""
 
+from __future__ import annotations
 from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 

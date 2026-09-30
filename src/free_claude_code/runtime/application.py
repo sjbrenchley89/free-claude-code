@@ -1,5 +1,6 @@
 """Single owner for application startup, shutdown, and runtime operations."""
 
+from __future__ import annotations
 import asyncio
 import inspect
 import logging

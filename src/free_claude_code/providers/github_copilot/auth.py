@@ -1,5 +1,6 @@
 """Opt-in FCC connection state over native Copilot account credentials."""
 
+from __future__ import annotations
 import asyncio
 import json
 import os
@@ -116,7 +117,7 @@ class CopilotAuthManager:
         self._closed = False
         try:
             self._read_state()
-        except OSError, ValueError, UnicodeError:
+        except (OSError, ValueError, UnicodeError):
             self._enabled = False
             self._identity = None
             self._last_error = (

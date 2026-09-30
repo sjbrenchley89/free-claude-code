@@ -1,5 +1,6 @@
 """Provider-prefixed model reference helpers."""
 
+from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Protocol

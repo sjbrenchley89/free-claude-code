@@ -1,5 +1,6 @@
 """Adapt the OpenAI SDK stream to FCC's asynchronous cleanup contract."""
 
+from __future__ import annotations
 from collections.abc import AsyncIterator
 
 from openai import AsyncStream

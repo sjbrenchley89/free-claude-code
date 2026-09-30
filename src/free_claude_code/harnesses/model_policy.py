@@ -1,5 +1,6 @@
 """Shared effort choices for FCC-generated native client catalogs."""
 
+from __future__ import annotations
 from free_claude_code.application.model_catalog import CatalogModel
 
 SUPPORTED_REASONING_LEVELS = {

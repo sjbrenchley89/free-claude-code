@@ -4,6 +4,7 @@ The application holds the owner lock until both features close and pooled
 connections are disposed. Each transaction exclusively leases one connection.
 """
 
+from __future__ import annotations
 import asyncio
 import os
 import sqlite3

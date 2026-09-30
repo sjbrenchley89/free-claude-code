@@ -1,5 +1,6 @@
 """NVIDIA NIM settings (fixed values, no env config)."""
 
+from __future__ import annotations
 from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
 
 from free_claude_code.config.constants import ANTHROPIC_DEFAULT_MAX_OUTPUT_TOKENS

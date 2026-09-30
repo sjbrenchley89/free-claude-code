@@ -1,5 +1,6 @@
 """Relational, transaction-owned state for FCC coding conversations."""
 
+from __future__ import annotations
 import asyncio
 import json
 import sqlite3

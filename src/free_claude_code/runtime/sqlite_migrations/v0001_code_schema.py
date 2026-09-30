@@ -1,5 +1,6 @@
 """Version 1: baseline Code tables and permanent transcript entries for prompts."""
 
+from __future__ import annotations
 import sqlite3
 
 _PROMPT_COLUMNS = """(

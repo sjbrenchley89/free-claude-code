@@ -1,5 +1,6 @@
 """Command parsing utilities for API optimizations."""
 
+from __future__ import annotations
 import re
 import shlex
 

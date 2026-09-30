@@ -1,5 +1,6 @@
 """One closable generation of lazily constructed provider clients."""
 
+from __future__ import annotations
 import asyncio
 from collections.abc import Awaitable, Callable, Mapping, MutableMapping
 from functools import partial

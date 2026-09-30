@@ -1,5 +1,6 @@
 """Kilo.ai provider implementation."""
 
+from __future__ import annotations
 from free_claude_code.application.model_metadata import ProviderModelInfo
 from free_claude_code.core.anthropic import ReasoningReplayMode
 from free_claude_code.core.reasoning import ReasoningEffort

@@ -1,5 +1,6 @@
 """Atomic text-file replacement for local client configuration."""
 
+from __future__ import annotations
 import json
 import os
 import stat

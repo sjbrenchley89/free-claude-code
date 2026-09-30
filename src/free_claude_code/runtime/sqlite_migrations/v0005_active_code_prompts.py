@@ -1,5 +1,6 @@
 """Index the live prompt working set independently of saved history."""
 
+from __future__ import annotations
 import sqlite3
 
 
